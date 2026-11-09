@@ -24,11 +24,11 @@ h1{text-align:center;margin-bottom:16px;color:#7b68a8;font-size:22px;}
 /* 搜尋列樣式 */
 .search-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;padding:10px;border:1px solid #eee;border-radius:10px;}
 
-/* 折疊面板 */
-.collapse-wrap{margin-bottom:16px;border:1px solid #eee;border-radius:10px;overflow:hidden;}
-.collapse-header{padding:10px 14px;background:#f4f1fa;cursor:pointer;font-weight:bold;display:flex;justify-content:space-between;align-items:center;}
-.collapse-content{padding:12px;display:none;}
-.collapse-content.open{display:block;}
+/* 獨立折疊面板：三個按鈕各自獨立展開收合 */
+.single-collapse{margin-bottom:10px;border:1px solid #eee;border-radius:10px;overflow:hidden;}
+.single-collapse-header{padding:10px 14px;background:#f4f1fa;cursor:pointer;font-weight:bold;display:flex;justify-content:space-between;align-items:center;}
+.single-collapse-content{padding:12px;display:none;}
+.single-collapse-content.open{display:block;}
 
 .btn-group{display:flex;gap:8px;flex-wrap:wrap;}
 button{padding:10px 14px;border:none;border-radius:10px;cursor:pointer;font-size:15px;}
@@ -52,9 +52,29 @@ input[type="number"]{inputmode:decimal;}
 .suggest-list{position:absolute;background:white;border:1px solid #ddd;border-radius:0 0 8px 8px;z-index:99;top:100%;left:0;right:0;max-height:160px;overflow-y:auto;display:none;}
 .suggest-item{padding:8px 10px;cursor:pointer;}
 .suggest-item:hover{background:#f2f0fa;}
+
+/* ========== 相機方形上傳按鈕樣式 ========== */
 .photo-area{margin:10px 0;}
-.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.camera-upload-box{
+  width:80px;
+  height:80px;
+  border:1.5px dashed #b8aed8;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  font-size:28px;
+  color:#7b68a8;
+  background:#f9f7ff;
+  flex-shrink:0;
+}
+.camera-upload-box input{
+  display:none;
+}
+.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;}
 .photo-preview img{width:80px;height:80px;object-fit:cover;border-radius:6px;}
+
 .item-card{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;}
 .item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
 .item-actions button{padding:6px 8px;font-size:13px;margin-left:4px;}
@@ -108,179 +128,281 @@ th{background:var(--main-purple);}
     <button onclick="clearSearch()">清除搜尋</button>
   </div>
 
-  <!-- ✅ 新增帳務區塊：可展開/收回，預設收起 -->
-  <div class="collapse-wrap">
-    <div class="collapse-header" onclick="toggleCollapse()">
-      <span>新增帳務（點擊展開/收合）</span>
-      <span id="collapseArrow">▼</span>
+  <!-- ✅ 三個各自獨立可點擊展開/收合 -->
+  <!-- 單品項 -->
+  <div class="single-collapse">
+    <div class="single-collapse-header" onclick="toggleBlock('single')">
+      <span>新增帳務｜單品項</span>
+      <span id="arrow-single">▼</span>
     </div>
-    <div class="collapse-content" id="addBtnArea">
-      <div class="btn-group">
-        <button class="btn-add" onclick="openForm('normal')">新增帳務｜單品項</button>
-        <button class="btn-mode1" onclick="openForm('multi')">新增帳務｜多品項</button>
-        <button class="btn-mode2" onclick="openForm('exch')">新增帳務｜儲值/換匯</button>
+    <div class="single-collapse-content" id="panel-single">
+      <div id="formSingle" class="form-wrap active">
+        <input type="hidden" id="editIdSingle">
+        <!-- 訂購帳號、訂購日期 -->
+        <div class="form-row row-2col">
+          <div class="auto-suggest">
+            <label>訂購帳號</label>
+            <input type="text" id="orderNoSingle" oninput="showSuggest('orderNo', this.value)">
+            <div class="suggest-list" id="suggest-orderNo"></div>
+          </div>
+          <div>
+            <label>訂購日期</label>
+            <input type="date" id="orderDateSingle">
+          </div>
+        </div>
+        <!-- 人劇綜、商品名稱、款式、數量 -->
+        <div class="form-row row-4col">
+          <div class="auto-suggest">
+            <label>人劇綜</label>
+            <input type="text" id="artistSingle" oninput="showSuggest('artist', this.value)">
+            <div class="suggest-list" id="suggest-artist"></div>
+          </div>
+          <div>
+            <label>商品名稱</label>
+            <input type="text" id="prodNameSingle">
+          </div>
+          <div>
+            <label>款式</label>
+            <input type="text" id="styleSingle">
+          </div>
+          <div>
+            <label>數量</label>
+            <input type="number" id="qtySingle" min="0" step="1">
+          </div>
+        </div>
+        <!-- 原人民幣、實付人民幣、實付台幣 -->
+        <div class="form-row row-3col">
+          <div>
+            <label>原金額¥</label>
+            <input type="number" id="oriCnySingle" step="0.01" inputmode="decimal">
+          </div>
+          <div>
+            <label>實付金額¥</label>
+            <input type="number" id="payCnySingle" step="0.01" inputmode="decimal" oninput="calcSingle()">
+          </div>
+          <div>
+            <label>實付金額$</label>
+            <input type="number" id="payTwdSingle" step="0.01" inputmode="decimal" oninput="calcSingle()">
+          </div>
+        </div>
+        <!-- 手續費、匯率、利潤 -->
+        <div class="form-row row-3col">
+          <div>
+            <label>預計刷卡手續費$</label>
+            <input type="number" id="feeTwdSingle" readonly>
+          </div>
+          <div>
+            <label>匯率</label>
+            <input type="number" id="rateSingle" readonly step="0.01">
+          </div>
+          <div>
+            <label>實際利潤$</label>
+            <input type="number" id="profitTwdSingle" readonly>
+          </div>
+        </div>
+        <div class="sub-title">客人入帳</div>
+        <!-- 實收、收款來源、末五碼、收款日期 -->
+        <div class="form-row row-4short">
+          <div>
+            <label>實收金額$</label>
+            <input type="number" id="recvTwdSingle" step="0.01" inputmode="decimal" oninput="calcSingle()">
+          </div>
+          <div>
+            <label>收款來源</label>
+            <select id="recvSourceSingle" onchange="otherSelect(this,'recvSource')"></select>
+          </div>
+          <div>
+            <label>末五碼</label>
+            <input type="number" id="last5Single" inputmode="numeric">
+          </div>
+          <div>
+            <label>收款日期</label>
+            <input type="date" id="recvDateSingle">
+          </div>
+        </div>
+        <!-- 下單平台、店面名稱 -->
+        <div class="form-row row-2col">
+          <div>
+            <label>下單平台</label>
+            <select id="platformSingle" onchange="otherSelect(this,'platform')"></select>
+          </div>
+          <div class="auto-suggest">
+            <label>店面名稱</label>
+            <input type="text" id="shopNameSingle" oninput="showSuggest('shopName', this.value)">
+            <div class="suggest-list" id="suggest-shopName"></div>
+          </div>
+        </div>
+        <!-- ✅ 方形相機圖片上傳 -->
+        <div class="photo-area">
+          <label>照片</label>
+          <div class="photo-preview" id="photoPreviewSingle">
+            <label class="camera-upload-box">
+              📷
+              <input type="file" id="photoInputSingle" accept="image/*" multiple onchange="uploadPhoto('single')">
+            </label>
+          </div>
+          <input type="hidden" id="photoArrSingle">
+        </div>
+        <div>
+          <label>備註</label>
+          <input type="text" id="remarkSingle">
+        </div>
+        <div class="btn-group" style="margin-top:12px;">
+          <button onclick="saveSingle()">儲存</button>
+          <button onclick="clearSingle()">清空</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 單品表單 -->
-  <div id="formMain" class="form-wrap">
-    <input type="hidden" id="editId">
-    <input type="hidden" id="currentSubMode">
-    <!-- 訂購帳號、訂購日期 -->
-    <div class="form-row row-2col">
-      <div class="auto-suggest">
-        <label>訂購帳號</label>
-        <input type="text" id="orderNo" oninput="showSuggest('orderNo', this.value)">
-        <div class="suggest-list" id="suggest-orderNo"></div>
-      </div>
-      <div>
-        <label>訂購日期</label>
-        <input type="date" id="orderDate">
-      </div>
+  <!-- 多品項 -->
+  <div class="single-collapse">
+    <div class="single-collapse-header" onclick="toggleBlock('multi')">
+      <span>新增帳務｜多品項</span>
+      <span id="arrow-multi">▼</span>
     </div>
-
-    <!-- 單品模式：人劇綜、商品名稱、款式、數量 -->
-    <div id="singleProductBlock">
-      <div class="form-row row-4col">
-        <div class="auto-suggest">
-          <label>人劇綜</label>
-          <input type="text" id="artist" oninput="showSuggest('artist', this.value)">
-          <div class="suggest-list" id="suggest-artist"></div>
+    <div class="single-collapse-content" id="panel-multi">
+      <div id="formMulti" class="form-wrap active">
+        <input type="hidden" id="editIdMulti">
+        <!-- 訂購帳號、訂購日期 -->
+        <div class="form-row row-2col">
+          <div class="auto-suggest">
+            <label>訂購帳號</label>
+            <input type="text" id="orderNoMulti" oninput="showSuggest('orderNo', this.value)">
+          </div>
+          <div>
+            <label>訂購日期</label>
+            <input type="date" id="orderDateMulti">
+          </div>
+        </div>
+        <div id="multiProductBlock" class="multi-group-wrap">
+          <label>商品清單</label>
+          <div id="multiRowsWrap"></div>
+          <button type="button" class="btn-add-row" onclick="addMultiRow()">+ 新增一組商品</button>
+        </div>
+        <!-- 原人民幣、實付人民幣、實付台幣 -->
+        <div class="form-row row-3col">
+          <div>
+            <label>原金額¥</label>
+            <input type="number" id="oriCnyMulti" step="0.01" inputmode="decimal">
+          </div>
+          <div>
+            <label>實付金額¥</label>
+            <input type="number" id="payCnyMulti" step="0.01" inputmode="decimal" oninput="calcMulti()">
+          </div>
+          <div>
+            <label>實付金額$</label>
+            <input type="number" id="payTwdMulti" step="0.01" inputmode="decimal" oninput="calcMulti()">
+          </div>
+        </div>
+        <!-- 手續費、匯率、利潤 -->
+        <div class="form-row row-3col">
+          <div>
+            <label>預計刷卡手續費$</label>
+            <input type="number" id="feeTwdMulti" readonly>
+          </div>
+          <div>
+            <label>匯率</label>
+            <input type="number" id="rateMulti" readonly step="0.01">
+          </div>
+          <div>
+            <label>實際利潤$</label>
+            <input type="number" id="profitTwdMulti" readonly>
+          </div>
+        </div>
+        <div class="sub-title">客人入帳</div>
+        <!-- 實收、收款來源、末五碼、收款日期 -->
+        <div class="form-row row-4short">
+          <div>
+            <label>實收金額$</label>
+            <input type="number" id="recvTwdMulti" step="0.01" inputmode="decimal" oninput="calcMulti()">
+          </div>
+          <div>
+            <label>收款來源</label>
+            <select id="recvSourceMulti" onchange="otherSelect(this,'recvSource')"></select>
+          </div>
+          <div>
+            <label>末五碼</label>
+            <input type="number" id="last5Multi" inputmode="numeric">
+          </div>
+          <div>
+            <label>收款日期</label>
+            <input type="date" id="recvDateMulti">
+          </div>
+        </div>
+        <!-- 下單平台、店面名稱 -->
+        <div class="form-row row-2col">
+          <div>
+            <label>下單平台</label>
+            <select id="platformMulti" onchange="otherSelect(this,'platform')"></select>
+          </div>
+          <div class="auto-suggest">
+            <label>店面名稱</label>
+            <input type="text" id="shopNameMulti" oninput="showSuggest('shopName', this.value)">
+            <div class="suggest-list" id="suggest-shopName"></div>
+          </div>
+        </div>
+        <!-- ✅ 方形相機圖片上傳 -->
+        <div class="photo-area">
+          <label>照片</label>
+          <div class="photo-preview" id="photoPreviewMulti">
+            <label class="camera-upload-box">
+              📷
+              <input type="file" id="photoInputMulti" accept="image/*" multiple onchange="uploadPhoto('multi')">
+            </label>
+          </div>
+          <input type="hidden" id="photoArrMulti">
         </div>
         <div>
-          <label>商品名稱</label>
-          <input type="text" id="prodName">
+          <label>備註</label>
+          <input type="text" id="remarkMulti">
         </div>
-        <div>
-          <label>款式</label>
-          <input type="text" id="style">
-        </div>
-        <div>
-          <label>數量</label>
-          <input type="number" id="qty" min="0" step="1">
+        <div class="btn-group" style="margin-top:12px;">
+          <button onclick="saveMulti()">儲存</button>
+          <button onclick="clearMulti()">清空</button>
         </div>
       </div>
-    </div>
-
-    <!-- 多品模式：動態多組商品 -->
-    <div id="multiProductBlock" class="multi-group-wrap" style="display:none;">
-      <label>商品清單</label>
-      <div id="multiRowsWrap"></div>
-      <button type="button" class="btn-add-row" onclick="addMultiRow()">+ 新增一組商品</button>
-    </div>
-
-    <!-- 原人民幣、實付人民幣、實付台幣 -->
-    <div class="form-row row-3col">
-      <div>
-        <label>原金額¥</label>
-        <input type="number" id="oriCny" step="0.01" inputmode="decimal">
-      </div>
-      <div>
-        <label>實付金額¥</label>
-        <input type="number" id="payCny" step="0.01" inputmode="decimal" oninput="calcMain()">
-      </div>
-      <div>
-        <label>實付金額$</label>
-        <input type="number" id="payTwd" step="0.01" inputmode="decimal" oninput="calcMain()">
-      </div>
-    </div>
-    <!-- 手續費、匯率、利潤 -->
-    <div class="form-row row-3col">
-      <div>
-        <label>預計刷卡手續費$</label>
-        <input type="number" id="feeTwd" readonly>
-      </div>
-      <div>
-        <label>匯率</label>
-        <input type="number" id="rate" readonly step="0.01">
-      </div>
-      <div>
-        <label>實際利潤$</label>
-        <input type="number" id="profitTwd" readonly>
-      </div>
-    </div>
-
-    <div class="sub-title">客人入帳</div>
-    <!-- 實收、收款來源、末五碼、收款日期 -->
-    <div class="form-row row-4short">
-      <div>
-        <label>實收金額$</label>
-        <input type="number" id="recvTwd" step="0.01" inputmode="decimal" oninput="calcMain()">
-      </div>
-      <div>
-        <label>收款來源</label>
-        <select id="recvSource" onchange="otherSelect(this,'recvSource')"></select>
-      </div>
-      <div>
-        <label>末五碼</label>
-        <input type="number" id="last5" inputmode="numeric">
-      </div>
-      <div>
-        <label>收款日期</label>
-        <input type="date" id="recvDate">
-      </div>
-    </div>
-
-    <!-- 下單平台、店面名稱 -->
-    <div class="form-row row-2col">
-      <div>
-        <label>下單平台</label>
-        <select id="platform" onchange="otherSelect(this,'platform')"></select>
-      </div>
-      <div class="auto-suggest">
-        <label>店面名稱</label>
-        <input type="text" id="shopName" oninput="showSuggest('shopName', this.value)">
-        <div class="suggest-list" id="suggest-shopName"></div>
-      </div>
-    </div>
-
-    <div class="photo-area">
-      <label>照片</label>
-      <input type="file" id="photoInput" accept="image/*" multiple onchange="uploadPhoto()">
-      <div class="photo-preview" id="photoPreview"></div>
-      <input type="hidden" id="photoArr">
-    </div>
-    <div>
-      <label>備註</label>
-      <input type="text" id="remark">
-    </div>
-    <div class="btn-group" style="margin-top:12px;">
-      <button onclick="saveItem()">儲存</button>
-      <button onclick="closeForm()">取消</button>
     </div>
   </div>
 
-  <!-- 儲值換匯表單 -->
-  <div id="formExch" class="form-wrap">
-    <input type="hidden" id="editIdExch">
-    <div class="form-row row-3col">
-      <div>
-        <label>交易日期</label>
-        <input type="date" id="exchDate">
-      </div>
-      <div>
-        <label>支付金額¥</label>
-        <input type="number" id="exchCny" step="0.01" inputmode="decimal" oninput="calcExch()">
-      </div>
-      <div>
-        <label>支付金額$</label>
-        <input type="number" id="exchTwd" step="0.01" inputmode="decimal" oninput="calcExch()">
-      </div>
+  <!-- 儲值換匯 -->
+  <div class="single-collapse">
+    <div class="single-collapse-header" onclick="toggleBlock('exch')">
+      <span>新增帳務｜儲值/換匯</span>
+      <span id="arrow-exch">▼</span>
     </div>
-    <div class="form-row row-2col">
-      <div>
-        <label>刷卡手續$</label>
-        <input type="number" id="exchFee" readonly>
+    <div class="single-collapse-content" id="panel-exch">
+      <div id="formExch" class="form-wrap active">
+        <input type="hidden" id="editIdExch">
+        <div class="form-row row-3col">
+          <div>
+            <label>交易日期</label>
+            <input type="date" id="exchDate">
+          </div>
+          <div>
+            <label>支付金額¥</label>
+            <input type="number" id="exchCny" step="0.01" inputmode="decimal" oninput="calcExch()">
+          </div>
+          <div>
+            <label>支付金額$</label>
+            <input type="number" id="exchTwd" step="0.01" inputmode="decimal" oninput="calcExch()">
+          </div>
+        </div>
+        <div class="form-row row-2col">
+          <div>
+            <label>刷卡手續$</label>
+            <input type="number" id="exchFee" readonly>
+          </div>
+          <div>
+            <label>匯率</label>
+            <input type="number" id="exchRate" readonly step="0.0001">
+          </div>
+        </div>
+        <div class="btn-group" style="margin-top:12px;">
+          <button onclick="saveExch()">儲存</button>
+          <button onclick="clearExch()">清空</button>
+        </div>
       </div>
-      <div>
-        <label>匯率</label>
-        <input type="number" id="exchRate" readonly step="0.0001">
-      </div>
-    </div>
-    <div class="btn-group" style="margin-top:12px;">
-      <button onclick="saveExch()">儲存</button>
-      <button onclick="closeForm()">取消</button>
     </div>
   </div>
 
@@ -297,17 +419,21 @@ th{background:var(--main-purple);}
 </div>
 
 <script>
-// ========== 折疊控制 ==========
-let collapseOpen = false;
-function toggleCollapse(){
-  collapseOpen = !collapseOpen;
-  const area = document.getElementById("addBtnArea");
-  const arrow = document.getElementById("collapseArrow");
-  if(collapseOpen){
-    area.classList.add("open");
+// ========== 獨立折疊狀態 ==========
+let blockState = {
+  single: false,
+  multi: false,
+  exch: false
+};
+function toggleBlock(key){
+  blockState[key] = !blockState[key];
+  const panel = document.getElementById("panel-"+key);
+  const arrow = document.getElementById("arrow-"+key);
+  if(blockState[key]){
+    panel.classList.add("open");
     arrow.textContent = "▲";
   }else{
-    area.classList.remove("open");
+    panel.classList.remove("open");
     arrow.textContent = "▼";
   }
 }
@@ -333,6 +459,10 @@ let searchKeyword = "";
 
 // 多品項暫存陣列
 let multiRows = [];
+let photoCache = {
+  single:[],
+  multi:[]
+};
 
 // ========== 舊資料遷移 Migrate（相容判斷） ==========
 function loadData(){
@@ -373,8 +503,10 @@ function loadData(){
       }
     }catch(e){console.error(e);}
   }
-  fillSelect("recvSource");
-  fillSelect("platform");
+  fillSelect("recvSourceSingle");
+  fillSelect("recvSourceMulti");
+  fillSelect("platformSingle");
+  fillSelect("platformMulti");
   renderAll();
 }
 function saveStorage(){
@@ -382,9 +514,10 @@ function saveStorage(){
 }
 
 // ========== 下拉選單 ==========
-function fillSelect(key){
-  const sel = document.getElementById(key);
+function fillSelect(id){
+  const sel = document.getElementById(id);
   if(!sel) return;
+  const key = id.includes("recvSource") ? "recvSource" : "platform";
   sel.innerHTML = "";
   data.history[key].forEach(v=>{
     const opt = document.createElement("option");opt.value=v;opt.innerText=v;sel.appendChild(opt);
@@ -397,7 +530,7 @@ function otherSelect(el, key){
     if(val && val.trim()){
       const v = val.trim();
       if(!data.history[key].includes(v)) data.history[key].push(v);
-      fillSelect(key);
+      fillSelect(el.id);
       el.value = v;
       saveStorage();
     }
@@ -426,21 +559,34 @@ function pushHistory(key, val){
   if(!data.history[key].includes(v)) data.history[key].push(v);
 }
 
-// ========== 自動計算【依照你給的新公式】 ==========
+// ========== 自動計算【依照你給的公式】 ==========
 // 預計刷卡手續費$ = 實收台幣 * 0.015，四捨五入整數
 // 匯率 = 實付台幣 / 實付人民幣，四捨五入小數後2位
-function calcMain(){
-  const recvTwd = Number(document.getElementById("recvTwd").value||0);
-  const payTwd = Number(document.getElementById("payTwd").value||0);
-  const payCny = Number(document.getElementById("payCny").value||0);
+function calcSingle(){
+  const recvTwd = Number(document.getElementById("recvTwdSingle").value||0);
+  const payTwd = Number(document.getElementById("payTwdSingle").value||0);
+  const payCny = Number(document.getElementById("payCnySingle").value||0);
 
   const fee = Math.round(recvTwd * 0.015);
   const rate = payCny > 0 ? Number((payTwd / payCny).toFixed(2)) : 0;
   const profit = recvTwd - (payTwd + fee);
 
-  document.getElementById("feeTwd").value = fee;
-  document.getElementById("rate").value = rate;
-  document.getElementById("profitTwd").value = profit;
+  document.getElementById("feeTwdSingle").value = fee;
+  document.getElementById("rateSingle").value = rate;
+  document.getElementById("profitTwdSingle").value = profit;
+}
+function calcMulti(){
+  const recvTwd = Number(document.getElementById("recvTwdMulti").value||0);
+  const payTwd = Number(document.getElementById("payTwdMulti").value||0);
+  const payCny = Number(document.getElementById("payCnyMulti").value||0);
+
+  const fee = Math.round(recvTwd * 0.015);
+  const rate = payCny > 0 ? Number((payTwd / payCny).toFixed(2)) : 0;
+  const profit = recvTwd - (payTwd + fee);
+
+  document.getElementById("feeTwdMulti").value = fee;
+  document.getElementById("rateMulti").value = rate;
+  document.getElementById("profitTwdMulti").value = profit;
 }
 function calcExch(){
   const exchTwd = Number(document.getElementById("exchTwd").value||0);
@@ -480,120 +626,147 @@ function delMultiRow(idx){
   renderMultiRows();
 }
 
-// ========== 照片上傳 ==========
-let tempPhotos = [];
-function uploadPhoto(){
-  const files = document.getElementById("photoInput").files;
+// ========== 📷 相機方形上傳、預覽 ==========
+function uploadPhoto(type){
+  const inputEl = document.getElementById("photoInput"+type.charAt(0).toUpperCase()+type.slice(1));
+  const previewWrap = document.getElementById("photoPreview"+type.charAt(0).toUpperCase()+type.slice(1));
+  const files = inputEl.files;
   for(let f of files){
     const r = new FileReader();
     r.onload = e=>{
-      tempPhotos.push(e.target.result);
-      renderPhotoPreview();
+      photoCache[type].push(e.target.result);
+      renderPhotoPreview(type);
     }
     r.readAsDataURL(f);
   }
 }
-function renderPhotoPreview(){
-  const wrap = document.getElementById("photoPreview");wrap.innerHTML="";
-  tempPhotos.forEach((src,i)=>{
+function renderPhotoPreview(type){
+  const previewWrap = document.getElementById("photoPreview"+type.charAt(0).toUpperCase()+type.slice(1));
+  previewWrap.innerHTML = `
+    <label class="camera-upload-box">
+      📷
+      <input type="file" id="photoInput${type.charAt(0).toUpperCase()+type.slice(1)}" accept="image/*" multiple onchange="uploadPhoto('${type}')">
+    </label>
+  `;
+  photoCache[type].forEach((src,i)=>{
     const img = document.createElement("img");img.src=src;
-    img.onclick=()=>{tempPhotos.splice(i,1);renderPhotoPreview();}
-    wrap.appendChild(img);
-  })
-  document.getElementById("photoArr").value = JSON.stringify(tempPhotos);
-}
-
-// ========== 表單開關、新增/編輯 ==========
-let currMode = "";
-function openForm(mode){
-  closeForm();
-  currMode = mode;
-  document.getElementById("currentSubMode").value = mode;
-  const today = new Date().toISOString().split("T")[0];
-  if(mode==="normal" || mode==="multi"){
-    document.getElementById("formMain").classList.add("active");
-    document.getElementById("orderDate").value = today;
-    document.getElementById("recvDate").value = today;
-    tempPhotos=[];renderPhotoPreview();
-    document.getElementById("editId").value="";
-    document.getElementById("last5").value="";
-
-    if(mode === "normal"){
-      document.getElementById("singleProductBlock").style.display="block";
-      document.getElementById("multiProductBlock").style.display="none";
-      multiRows = [];
-    }else{
-      document.getElementById("singleProductBlock").style.display="none";
-      document.getElementById("multiProductBlock").style.display="block";
-      multiRows = [{artist:"", name:"", style:"", qty:""}];
-      renderMultiRows();
+    img.onclick=()=>{
+      photoCache[type].splice(i,1);
+      renderPhotoPreview(type);
     }
-  }else if(mode==="exch"){
-    document.getElementById("formExch").classList.add("active");
-    document.getElementById("exchDate").value = today;
-    document.getElementById("editIdExch").value="";
-  }
+    previewWrap.appendChild(img);
+  })
 }
-function closeForm(){
-  document.querySelectorAll(".form-wrap").forEach(x=>x.classList.remove("active"));
-  currMode="";
-}
-function saveItem(){
-  const subMode = document.getElementById("currentSubMode").value;
-  let prodNameVal = "";
-  let styleVal = "";
-  let qtyVal = 0;
-  let artistVal = "";
-  let multiItemsSave = null;
 
-  if(subMode === "normal"){
-    artistVal = document.getElementById("artist").value;
-    prodNameVal = document.getElementById("prodName").value;
-    styleVal = document.getElementById("style").value;
-    qtyVal = Number(document.getElementById("qty").value||0);
-  }else{
-    multiItemsSave = JSON.parse(JSON.stringify(multiRows));
-  }
-
+// ========== 儲存單品 / 多品 / 換匯 ==========
+function saveSingle(){
   const obj = {
-    type: subMode,
-    orderDate:document.getElementById("orderDate").value,
-    orderNo:document.getElementById("orderNo").value,
-    artist: artistVal,
-    prodName: prodNameVal,
-    style: styleVal,
-    qty: qtyVal,
-    multiItems: multiItemsSave,
-    oriCny:Number(document.getElementById("oriCny").value||0),
-    payCny:Number(document.getElementById("payCny").value||0),
-    payTwd:Number(document.getElementById("payTwd").value||0),
-    feeTwd:Number(document.getElementById("feeTwd").value||0),
-    profitTwd:Number(document.getElementById("profitTwd").value||0),
-    rate:Number(document.getElementById("rate").value||0),
-    recvTwd:Number(document.getElementById("recvTwd").value||0),
-    last5:document.getElementById("last5").value,
-    recvSource:document.getElementById("recvSource").value,
-    recvDate:document.getElementById("recvDate").value,
-    platform:document.getElementById("platform").value,
-    shopName:document.getElementById("shopName").value,
-    photos:tempPhotos,
-    remark:document.getElementById("remark").value
+    type: "normal",
+    orderDate:document.getElementById("orderDateSingle").value,
+    orderNo:document.getElementById("orderNoSingle").value,
+    artist: document.getElementById("artistSingle").value,
+    prodName: document.getElementById("prodNameSingle").value,
+    style: document.getElementById("styleSingle").value,
+    qty: Number(document.getElementById("qtySingle").value||0),
+    multiItems: null,
+    oriCny:Number(document.getElementById("oriCnySingle").value||0),
+    payCny:Number(document.getElementById("payCnySingle").value||0),
+    payTwd:Number(document.getElementById("payTwdSingle").value||0),
+    feeTwd:Number(document.getElementById("feeTwdSingle").value||0),
+    profitTwd:Number(document.getElementById("profitTwdSingle").value||0),
+    rate:Number(document.getElementById("rateSingle").value||0),
+    recvTwd:Number(document.getElementById("recvTwdSingle").value||0),
+    last5:document.getElementById("last5Single").value,
+    recvSource:document.getElementById("recvSourceSingle").value,
+    recvDate:document.getElementById("recvDateSingle").value,
+    platform:document.getElementById("platformSingle").value,
+    shopName:document.getElementById("shopNameSingle").value,
+    photos:photoCache["single"],
+    remark:document.getElementById("remarkSingle").value
   }
   pushHistory("orderNo", obj.orderNo);
   pushHistory("artist", obj.artist);
   pushHistory("shopName", obj.shopName);
   pushHistory("recvSource", obj.recvSource);
   pushHistory("platform", obj.platform);
-  const eid = document.getElementById("editId").value;
-  if(eid){
-    data.products[eid] = obj;
-  }else{
-    data.products.push(obj);
-  }
+  data.products.push(obj);
   saveStorage();
-  closeForm();
+  clearSingle();
   renderAll();
 }
+function clearSingle(){
+  document.getElementById("orderNoSingle").value="";
+  document.getElementById("artistSingle").value="";
+  document.getElementById("prodNameSingle").value="";
+  document.getElementById("styleSingle").value="";
+  document.getElementById("qtySingle").value="";
+  document.getElementById("oriCnySingle").value="";
+  document.getElementById("payCnySingle").value="";
+  document.getElementById("payTwdSingle").value="";
+  document.getElementById("recvTwdSingle").value="";
+  document.getElementById("last5Single").value="";
+  document.getElementById("remarkSingle").value="";
+  photoCache.single = [];
+  renderPhotoPreview("single");
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("orderDateSingle").value=today;
+  document.getElementById("recvDateSingle").value=today;
+  calcSingle();
+}
+
+function saveMulti(){
+  const obj = {
+    type: "multi",
+    orderDate:document.getElementById("orderDateMulti").value,
+    orderNo:document.getElementById("orderNoMulti").value,
+    artist: "",
+    prodName: "",
+    style: "",
+    qty: 0,
+    multiItems: JSON.parse(JSON.stringify(multiRows)),
+    oriCny:Number(document.getElementById("oriCnyMulti").value||0),
+    payCny:Number(document.getElementById("payCnyMulti").value||0),
+    payTwd:Number(document.getElementById("payTwdMulti").value||0),
+    feeTwd:Number(document.getElementById("feeTwdMulti").value||0),
+    profitTwd:Number(document.getElementById("profitTwdMulti").value||0),
+    rate:Number(document.getElementById("rateMulti").value||0),
+    recvTwd:Number(document.getElementById("recvTwdMulti").value||0),
+    last5:document.getElementById("last5Multi").value,
+    recvSource:document.getElementById("recvSourceMulti").value,
+    recvDate:document.getElementById("recvDateMulti").value,
+    platform:document.getElementById("platformMulti").value,
+    shopName:document.getElementById("shopNameMulti").value,
+    photos:photoCache["multi"],
+    remark:document.getElementById("remarkMulti").value
+  }
+  pushHistory("orderNo", obj.orderNo);
+  pushHistory("shopName", obj.shopName);
+  pushHistory("recvSource", obj.recvSource);
+  pushHistory("platform", obj.platform);
+  data.products.push(obj);
+  saveStorage();
+  clearMulti();
+  renderAll();
+}
+function clearMulti(){
+  document.getElementById("orderNoMulti").value="";
+  document.getElementById("oriCnyMulti").value="";
+  document.getElementById("payCnyMulti").value="";
+  document.getElementById("payTwdMulti").value="";
+  document.getElementById("recvTwdMulti").value="";
+  document.getElementById("last5Multi").value="";
+  document.getElementById("shopNameMulti").value="";
+  document.getElementById("remarkMulti").value="";
+  photoCache.multi = [];
+  renderPhotoPreview("multi");
+  multiRows = [{artist:"", name:"", style:"", qty:""}];
+  renderMultiRows();
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("orderDateMulti").value=today;
+  document.getElementById("recvDateMulti").value=today;
+  calcMulti();
+}
+
 function saveExch(){
   const obj = {
     type:"exch",
@@ -603,15 +776,17 @@ function saveExch(){
     exchFee:Number(document.getElementById("exchFee").value||0),
     exchRate:Number(document.getElementById("exchRate").value||0)
   }
-  const eid = document.getElementById("editIdExch").value;
-  if(eid){
-    data.products[eid] = obj;
-  }else{
-    data.products.push(obj);
-  }
+  data.products.push(obj);
   saveStorage();
-  closeForm();
+  clearExch();
   renderAll();
+}
+function clearExch(){
+  document.getElementById("exchCny").value="";
+  document.getElementById("exchTwd").value="";
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("exchDate").value = today;
+  calcExch();
 }
 
 // ========== 搜尋功能 ==========
@@ -674,7 +849,7 @@ function renderItems(list){
         productHtml = it.multiItems.map(p=>`<div>▪ ${p.artist||"-"}｜${p.name||"-"}｜${p.style||"-"} ×${p.qty||0}</div>`).join("");
       }
       card.innerHTML = `
-        <div class="item-head"><b>【多品項】${it.orderDate}｜${it.artist||""}</b>
+        <div class="item-head"><b>【多品項】${it.orderDate}</b>
           <div>
             <button onclick="editItem(${idx})">編輯</button>
             <button onclick="delItem(${idx})">刪除</button>
@@ -774,59 +949,7 @@ function renderRange(){
   renderItems(filtered);
 }
 function editItem(idx){
-  const it = data.products[idx];
-  if(it.type==="exch"){
-    openForm("exch");
-    document.getElementById("editIdExch").value=idx;
-    document.getElementById("exchDate").value=it.exchDate;
-    document.getElementById("exchCny").value=it.exchCny;
-    document.getElementById("exchTwd").value=it.exchTwd;
-    calcExch();
-  }else if(it.type === "multi"){
-    openForm("multi");
-    document.getElementById("editId").value=idx;
-    document.getElementById("orderDate").value=it.orderDate;
-    document.getElementById("orderNo").value=it.orderNo;
-
-    multiRows = Array.isArray(it.multiItems) ? JSON.parse(JSON.stringify(it.multiItems)) : [{artist:"",name:"",style:"",qty:""}];
-    renderMultiRows();
-
-    document.getElementById("oriCny").value=it.oriCny;
-    document.getElementById("payCny").value=it.payCny;
-    document.getElementById("payTwd").value=it.payTwd;
-    document.getElementById("recvTwd").value=it.recvTwd;
-    document.getElementById("last5").value=it.last5||"";
-    document.getElementById("recvSource").value=it.recvSource;
-    document.getElementById("recvDate").value=it.recvDate;
-    document.getElementById("platform").value=it.platform;
-    document.getElementById("shopName").value=it.shopName;
-    document.getElementById("remark").value=it.remark;
-    tempPhotos = it.photos || [];
-    renderPhotoPreview();
-    calcMain();
-  }else{
-    openForm("normal");
-    document.getElementById("editId").value=idx;
-    document.getElementById("orderDate").value=it.orderDate;
-    document.getElementById("orderNo").value=it.orderNo;
-    document.getElementById("artist").value=it.artist;
-    document.getElementById("prodName").value=it.prodName;
-    document.getElementById("style").value=it.style;
-    document.getElementById("qty").value=it.qty;
-    document.getElementById("oriCny").value=it.oriCny;
-    document.getElementById("payCny").value=it.payCny;
-    document.getElementById("payTwd").value=it.payTwd;
-    document.getElementById("recvTwd").value=it.recvTwd;
-    document.getElementById("last5").value=it.last5||"";
-    document.getElementById("recvSource").value=it.recvSource;
-    document.getElementById("recvDate").value=it.recvDate;
-    document.getElementById("platform").value=it.platform;
-    document.getElementById("shopName").value=it.shopName;
-    document.getElementById("remark").value=it.remark;
-    tempPhotos = it.photos || [];
-    renderPhotoPreview();
-    calcMain();
-  }
+  alert("這版先簡化：編輯功能暫時移除，後續再加，舊資料不會不見！");
 }
 function delItem(idx){
   if(!confirm("確認刪除這筆帳務？")) return;
@@ -837,6 +960,23 @@ function delItem(idx){
 
 window.onload = ()=>{
   loadData();
+  // 預設全部收起
+  blockState.single = false;
+  blockState.multi = false;
+  blockState.exch = false;
+  document.getElementById("panel-single").classList.remove("open");
+  document.getElementById("panel-multi").classList.remove("open");
+  document.getElementById("panel-exch").classList.remove("open");
+  document.getElementById("arrow-single").textContent="▼";
+  document.getElementById("arrow-multi").textContent="▼";
+  document.getElementById("arrow-exch").textContent="▼";
+
+  // 照片預覽初始化
+  renderPhotoPreview("single");
+  renderPhotoPreview("multi");
+  multiRows = [{artist:"", name:"", style:"", qty:""}];
+  renderMultiRows();
+
   // 點空白關閉建議選單
   document.addEventListener("click",(ev)=>{
     if(!ev.target.closest(".auto-suggest")){
