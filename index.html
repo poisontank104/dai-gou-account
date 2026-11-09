@@ -25,7 +25,7 @@ button{padding:10px 14px;border:none;border-radius:10px;cursor:pointer;font-size
 .btn-add{background:#947fc7;color:white;font-weight:bold;}
 .btn-mode1{background:var(--blue-light);}
 .btn-mode2{background:var(--green-light);}
-.filter-bar{margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.filter-bar{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:12px;border-top:1px solid #eee;}
 .form-wrap{display:none;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;}
 .form-wrap.active{display:block;}
 .form-row{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px,1fr));gap:10px;margin-bottom:10px;}
@@ -45,8 +45,34 @@ input[type="number"]{inputmode:decimal;}
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;}
 th,td{border:1px solid #eee;padding:8px;text-align:left;}
 th{background:var(--main-purple);}
+.search-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
 @media(max-width:600px){
   .stat-row{grid-template-columns:1fr;}
+}
+/* ===== 多品項商品組樣式 ===== */
+.multi-group-wrap{
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:10px;
+}
+.multi-item-row{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 70px;
+  gap:8px;
+  margin-bottom:8px;
+  align-items:end;
+}
+.btn-add-row{
+  opacity:0.7;
+  background:#947fc7;
+  color:#fff;
+  margin-top:6px;
+}
+.btn-del-row{
+  background:#e57373;
+  color:white;
+  padding:7px;
 }
 </style>
 </head>
@@ -57,13 +83,6 @@ th{background:var(--main-purple);}
     <div class="stat-card">本月總支出¥ <span id="sumCny">0.00</span></div>
     <div class="stat-card">本月總支出$ <span id="sumTwd">0</span></div>
   </div>
-  <div class="filter-bar">
-    <label>彙整區間</label>
-    <input type="date" id="startDate">
-    <input type="date" id="endDate">
-    <button onclick="renderAll()">全部資料</button>
-    <button onclick="renderRange()">區間彙整</button>
-  </div>
   <div class="btn-group">
     <button class="btn-add" onclick="openForm('normal')">新增帳務｜單品項</button>
     <button class="btn-mode1" onclick="openForm('multi')">新增帳務｜多品項</button>
@@ -73,6 +92,7 @@ th{background:var(--main-purple);}
   <!-- 單品 / 多品項表單 -->
   <div id="formMain" class="form-wrap">
     <input type="hidden" id="editId">
+    <input type="hidden" id="currentSubMode">
     <div class="form-row">
       <div>
         <label>訂購日期</label>
@@ -90,21 +110,33 @@ th{background:var(--main-purple);}
         <input type="text" id="artist" oninput="showSuggest('artist', this.value)">
         <div class="suggest-list" id="suggest-artist"></div>
       </div>
-      <div>
-        <label>商品名稱</label>
-        <input type="text" id="prodName">
+    </div>
+
+    <!-- 單品模式：一組商品欄 -->
+    <div id="singleProductBlock">
+      <div class="form-row">
+        <div>
+          <label>商品名稱</label>
+          <input type="text" id="prodName">
+        </div>
+        <div>
+          <label>款式</label>
+          <input type="text" id="style">
+        </div>
+        <div>
+          <label>數量</label>
+          <input type="number" id="qty" min="0" step="1">
+        </div>
       </div>
     </div>
-    <div class="form-row">
-      <div>
-        <label>款式</label>
-        <input type="text" id="style">
-      </div>
-      <div>
-        <label>數量</label>
-        <input type="number" id="qty" min="0" step="1">
-      </div>
+
+    <!-- 多品模式：動態多組商品 -->
+    <div id="multiProductBlock" class="multi-group-wrap" style="display:none;">
+      <label>商品清單</label>
+      <div id="multiRowsWrap"></div>
+      <button type="button" class="btn-add-row" onclick="addMultiRow()">+ 新增一組商品</button>
     </div>
+
     <div class="form-row">
       <div>
         <label>原人民幣金額¥</label>
@@ -204,6 +236,20 @@ th{background:var(--main-purple);}
   </div>
 
   <div id="listWrap"></div>
+
+  <!-- 搜尋欄 + 彙整區間（移到最底部） -->
+  <div class="search-bar">
+    <label>關鍵字搜尋</label>
+    <input type="text" id="searchInput" placeholder="商品、藝人、訂購帳號、備註..." oninput="doSearch()">
+    <button onclick="clearSearch()">清除搜尋</button>
+  </div>
+  <div class="filter-bar">
+    <label>彙整區間</label>
+    <input type="date" id="startDate">
+    <input type="date" id="endDate">
+    <button onclick="renderAll()">全部資料</button>
+    <button onclick="renderRange()">區間彙整</button>
+  </div>
 </div>
 
 <script>
@@ -224,6 +270,10 @@ let data = {
     payWay:[...BASE_PAYWAY]
   }
 };
+let searchKeyword = "";
+
+// 多品項暫存陣列
+let multiRows = [];
 
 // ========== 舊資料遷移 Migrate（相容判斷） ==========
 function loadData(){
@@ -242,6 +292,7 @@ function loadData(){
             prodName:item.name||"",
             style:item.style||"",
             qty:item.qty||1,
+            multiItems: null,
             oriCny:item.oriCny||0,
             payCny:item.cny||0,
             payTwd:item.twd||0,
@@ -336,6 +387,34 @@ function calcExch(){
   document.getElementById("exchRate").value = rate;
 }
 
+// ========== 多品項動態列 ==========
+function renderMultiRows(){
+  const wrap = document.getElementById("multiRowsWrap");
+  wrap.innerHTML = "";
+  multiRows.forEach((rowData, idx)=>{
+    const div = document.createElement("div");
+    div.className = "multi-item-row";
+    div.innerHTML = `
+      <input type="text" placeholder="商品名稱" value="${rowData.name||''}" onchange="updateMultiRow(${idx},'name',this.value)">
+      <input type="text" placeholder="款式" value="${rowData.style||''}" onchange="updateMultiRow(${idx},'style',this.value)">
+      <input type="number" min="0" step="1" placeholder="數量" value="${rowData.qty||''}" onchange="updateMultiRow(${idx},'qty',Number(this.value))">
+      <button class="btn-del-row" onclick="delMultiRow(${idx})">刪</button>
+    `;
+    wrap.appendChild(div);
+  })
+}
+function addMultiRow(){
+  multiRows.push({name:"", style:"", qty:""});
+  renderMultiRows();
+}
+function updateMultiRow(idx, key, val){
+  multiRows[idx][key] = val;
+}
+function delMultiRow(idx){
+  multiRows.splice(idx,1);
+  renderMultiRows();
+}
+
 // ========== 照片上傳 ==========
 let tempPhotos = [];
 function uploadPhoto(){
@@ -364,6 +443,7 @@ let currMode = "";
 function openForm(mode){
   closeForm();
   currMode = mode;
+  document.getElementById("currentSubMode").value = mode;
   const today = new Date().toISOString().split("T")[0];
   if(mode==="normal" || mode==="multi"){
     document.getElementById("formMain").classList.add("active");
@@ -371,6 +451,17 @@ function openForm(mode){
     document.getElementById("recvDate").value = today;
     tempPhotos=[];renderPhotoPreview();
     document.getElementById("editId").value="";
+
+    if(mode === "normal"){
+      document.getElementById("singleProductBlock").style.display="block";
+      document.getElementById("multiProductBlock").style.display="none";
+      multiRows = [];
+    }else{
+      document.getElementById("singleProductBlock").style.display="none";
+      document.getElementById("multiProductBlock").style.display="block";
+      multiRows = [{name:"", style:"", qty:""}];
+      renderMultiRows();
+    }
   }else if(mode==="exch"){
     document.getElementById("formExch").classList.add("active");
     document.getElementById("exchDate").value = today;
@@ -382,14 +473,29 @@ function closeForm(){
   currMode="";
 }
 function saveItem(){
+  const subMode = document.getElementById("currentSubMode").value;
+  let prodNameVal = "";
+  let styleVal = "";
+  let qtyVal = 0;
+  let multiItemsSave = null;
+
+  if(subMode === "normal"){
+    prodNameVal = document.getElementById("prodName").value;
+    styleVal = document.getElementById("style").value;
+    qtyVal = Number(document.getElementById("qty").value||0);
+  }else{
+    multiItemsSave = JSON.parse(JSON.stringify(multiRows));
+  }
+
   const obj = {
-    type: currMode,
+    type: subMode,
     orderDate:document.getElementById("orderDate").value,
     orderNo:document.getElementById("orderNo").value,
     artist:document.getElementById("artist").value,
-    prodName:document.getElementById("prodName").value,
-    style:document.getElementById("style").value,
-    qty:Number(document.getElementById("qty").value||0),
+    prodName: prodNameVal,
+    style: styleVal,
+    qty: qtyVal,
+    multiItems: multiItemsSave,
     oriCny:Number(document.getElementById("oriCny").value||0),
     payCny:Number(document.getElementById("payCny").value||0),
     payTwd:Number(document.getElementById("payTwd").value||0),
@@ -439,6 +545,31 @@ function saveExch(){
   renderAll();
 }
 
+// ========== 搜尋功能 ==========
+function doSearch(){
+  searchKeyword = document.getElementById("searchInput").value.trim().toLowerCase();
+  renderAll();
+}
+function clearSearch(){
+  document.getElementById("searchInput").value = "";
+  searchKeyword = "";
+  renderAll();
+}
+function filterByKeyword(list){
+  if(!searchKeyword) return list;
+  return list.filter(it=>{
+    let textPool = "";
+    textPool += (it.orderDate||"") + (it.orderNo||"") + (it.artist||"") + (it.prodName||"") + (it.style||"") + (it.remark||"") + (it.shopName||"") + (it.platform||"");
+    if(Array.isArray(it.multiItems)){
+      it.multiItems.forEach(p=>{
+        textPool += (p.name||"") + (p.style||"");
+      })
+    }
+    if(it.type==="exch") textPool += it.exchDate||"";
+    return textPool.toLowerCase().includes(searchKeyword);
+  })
+}
+
 // ========== 渲染清單 + 統計 ==========
 function calcSum(list){
   let sumCny = 0, sumTwd = 0;
@@ -468,9 +599,47 @@ function renderItems(list){
           <tr><td>手續$</td><td>${it.exchFee}</td><td>匯率</td><td>${it.exchRate}</td></tr>
         </table>
       `
+    }else if(it.type === "multi"){
+      let productHtml = "";
+      if(Array.isArray(it.multiItems)){
+        productHtml = it.multiItems.map(p=>`<div>▪ ${p.name||"-"}｜${p.style||"-"} ×${p.qty||0}</div>`).join("");
+      }
+      card.innerHTML = `
+        <div class="item-head"><b>【多品項】${it.orderDate}｜${it.artist||""}</b>
+          <div>
+            <button onclick="editItem(${idx})">編輯</button>
+            <button onclick="delItem(${idx})">刪除</button>
+          </div>
+        </div>
+        ${productHtml}
+        <table>
+          <tr>
+            <td>訂購帳號</td><td>${it.orderNo||"-"}</td>
+            <td>原¥</td><td>${it.oriCny}</td>
+            <td>實付¥</td><td>${it.payCny}</td>
+          </tr>
+          <tr>
+            <td>實付$</td><td>${it.payTwd}</td>
+            <td>手續$</td><td>${it.feeTwd}</td>
+            <td>利潤$</td><td>${it.profitTwd}</td>
+          </tr>
+          <tr>
+            <td>匯率</td><td>${it.rate}</td>
+            <td>實收$</td><td>${it.recvTwd}</td>
+            <td>收款來源</td><td>${it.recvSource||"-"}</td>
+          </tr>
+          <tr>
+            <td>收款日</td><td>${it.recvDate||"-"}</td>
+            <td>平台</td><td>${it.platform||"-"}</td>
+            <td>店面</td><td>${it.shopName||"-"}</td>
+            <td>備註</td><td>${it.remark||"-"}</td>
+          </tr>
+        </table>
+        ${it.photos && it.photos.length>0 ? `<div class="photo-preview">${it.photos.map(x=>`<img src="${x}">`).join("")}</div>`:""}
+      `
     }else{
       card.innerHTML = `
-        <div class="item-head"><b>${it.orderDate}｜${it.artist} ${it.prodName}</b>
+        <div class="item-head"><b>${it.orderDate}｜${it.artist||""} ${it.prodName||""}</b>
           <div>
             <button onclick="editItem(${idx})">編輯</button>
             <button onclick="delItem(${idx})">刪除</button>
@@ -510,17 +679,19 @@ function renderItems(list){
   })
 }
 function renderAll(){
-  calcSum(data.products);
-  renderItems(data.products);
+  let list = filterByKeyword([...data.products]);
+  calcSum(list);
+  renderItems(list);
 }
 function renderRange(){
   const s = document.getElementById("startDate").value;
   const e = document.getElementById("endDate").value;
   if(!s || !e) return alert("請選起訖日期");
-  const filtered = data.products.filter(x=>{
+  let filtered = data.products.filter(x=>{
     const d = x.type==="exch" ? x.exchDate : x.orderDate;
     return d >= s && d <= e;
   })
+  filtered = filterByKeyword(filtered);
   calcSum(filtered);
   renderItems(filtered);
 }
@@ -533,8 +704,30 @@ function editItem(idx){
     document.getElementById("exchCny").value=it.exchCny;
     document.getElementById("exchTwd").value=it.exchTwd;
     calcExch();
+  }else if(it.type === "multi"){
+    openForm("multi");
+    document.getElementById("editId").value=idx;
+    document.getElementById("orderDate").value=it.orderDate;
+    document.getElementById("orderNo").value=it.orderNo;
+    document.getElementById("artist").value=it.artist;
+
+    multiRows = Array.isArray(it.multiItems) ? JSON.parse(JSON.stringify(it.multiItems)) : [{name:"",style:"",qty:""}];
+    renderMultiRows();
+
+    document.getElementById("oriCny").value=it.oriCny;
+    document.getElementById("payCny").value=it.payCny;
+    document.getElementById("payTwd").value=it.payTwd;
+    document.getElementById("recvTwd").value=it.recvTwd;
+    document.getElementById("recvSource").value=it.recvSource;
+    document.getElementById("recvDate").value=it.recvDate;
+    document.getElementById("platform").value=it.platform;
+    document.getElementById("shopName").value=it.shopName;
+    document.getElementById("remark").value=it.remark;
+    tempPhotos = it.photos || [];
+    renderPhotoPreview();
+    calcMain();
   }else{
-    openForm(it.type==="multi"?"multi":"normal");
+    openForm("normal");
     document.getElementById("editId").value=idx;
     document.getElementById("orderDate").value=it.orderDate;
     document.getElementById("orderNo").value=it.orderNo;
