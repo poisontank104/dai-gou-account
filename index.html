@@ -3,24 +3,358 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>首頁</title>
+<title>代購訂單記帳</title>
+<link rel="manifest" href="manifest.json">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, sans-serif}
-body{background:#f7f8fa;padding:30px}
-.container{max-width:900px;margin:0 auto;background:#fff;padding:30px;border-radius:16px;box-shadow:0 2px 10px #00000012}
-h1{color:#333;margin-bottom:20px;font-size:24px}
-.nav a{display:inline-block;padding:10px 16px;background:#8a7cd8;color:white;border-radius:10px;text-decoration:none;margin-right:10px;margin-bottom:10px}
-.nav a:hover{background:#7466c2}
+*{box-sizing:border-box;font-family:system-ui, sans-serif;}
+:root{
+  --purple-light:#efeaf8;
+  --purple-main:#bface2;
+  --purple-deep:#9d8cd1;
+  --text-color:#333;
+  --border-color:#e4e1f0;
+}
+body{max-width:1500px;margin:20px auto;padding:0 12px;background:#f9f8fc;font-size:14px;color:var(--text-color);}
+h1{color:var(--purple-deep);font-size:24px;margin-bottom:12px;font-weight:600;}
+.status{padding:8px 12px;border-radius:8px;margin-bottom:12px;background:#eef8ef;color:#2b7b3b;}
+.ctrl{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+button{padding:9px 16px;border:none;border-radius:10px;background:var(--purple-deep);color:#fff;cursor:pointer;font-size:14px;transition:0.2s;}
+button.del{background:#e88894;}
+button.addItem{background:var(--purple-main);color:#222;}
+button.secondary{background:#9487b8;}
+button:hover{opacity:0.92;transform:scale(1.02);}
+
+.main-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px #bface233;margin-bottom:20px;}
+.main-table th{background:var(--purple-light);color:var(--purple-deep);font-weight:600;padding:10px 6px;white-space:nowrap;border:1px solid var(--border-color);}
+.main-table td{border:1px solid var(--border-color);padding:9px 6px;text-align:center;vertical-align:middle;background:#fff;}
+
+.item-table{width:100%;border-collapse:collapse;margin:6px 0;border-radius:8px;overflow:hidden;}
+.item-table th{background:#f4f1fb;padding:6px;border:1px solid var(--border-color);font-size:13px;}
+.item-table td{padding:6px;border:1px solid var(--border-color);font-size:13px;}
+
+input, select{width:100%;border:1px solid var(--border-color);padding:7px;border-radius:7px;outline:none;font-size:14px;background:#fdfcff;transition:0.2s;}
+input:focus{border-color:var(--purple-main);background:#fff;}
+input[readonly]{background:#f7f4fc;color:#666;cursor:default;}
+
+.img-preview{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;min-height:48px;}
+.img-preview img{width:48px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border-color);}
+
+.sumBox{margin-top:18px;padding:16px;background:var(--purple-light);border-radius:12px;font-weight:500;line-height:1.8;color:var(--purple-deep);}
+.item-wrap{padding:8px;background:#faf8fe;border-radius:10px;}
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>🏠 首頁</h1>
-  <div class="nav">
-    <a href="order-table.html">訂購統計表</a>
-    <!-- 之後可以再加其他頁面連結 -->
-  </div>
-  <p style="margin-top:20px;color:#666">這是主頁，點擊按鈕進入訂購記錄表格頁</p>
+<h1>📒 代購訂單記帳｜淺霧紫PWA</h1>
+<div class="status" id="syncStatus">🔵 待同步</div>
+<div class="ctrl">
+<button onclick="loadCloud()">☁️ 從雲端讀取</button>
+<button onclick="addOrder()">➕ 新增整筆訂單</button>
+<button onclick="saveLocal()">💾 本機儲存</button>
+<button onclick="triggerSync()">☁️ 同步到Google雲碟</button>
+<button onclick="clearAll()">🗑️ 清空所有訂單</button>
 </div>
+
+<table class="main-table">
+<thead>
+<tr>
+<th>訂購日期</th>
+<th>訂購帳號</th>
+<th>藝人</th>
+<th>付款方式</th>
+<th>收款來源</th>
+<th>收款日期</th>
+<th>下單來源</th>
+<th>原人民幣¥</th>
+<th>實收人民幣¥</th>
+<th>實刷台幣$</th>
+<th>實收台幣$</th>
+<th>預計手續費</th>
+<th>匯率</th>
+<th>實際賺取$</th>
+<th>照片/備註</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody id="orderBody"></tbody>
+</table>
+
+<div class="sumBox">
+總實收人民幣：<span id="sumRmb">0.00</span> ¥｜
+總實刷台幣：<span id="sumTwdCharge">0.00</span> $｜
+總實收台幣：<span id="sumTwdGet">0.00</span> $｜
+總手續費：<span id="sumFee">0</span> $｜
+總淨獲利：<span id="sumProfit">0.00</span> $
+</div>
+
+<script>
+// ========== 這裡替換成你的Apps Script Web App網址 ==========
+const WEB_APP_URL = "貼上你的Web App網址";
+// ============================================================
+
+const payOpt = ["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"];
+const receiveOpt = ["中信$","郵局$","中信無卡","台新$","台新無卡","國泰$","台灣配$","LINE BANK","i pass money","line pay money"];
+const sourceOpt = ["淘寶","淘寶（騰訊）","淘寶（優酷）","淘寶（愛奇藝）","騰訊","優酷","愛奇藝","小芒","微店","微信（拼團呀）","微信（拼谷）","閑魚","小紅書","抖音","京東","QQ音樂","酷狗音樂","網易雲","拼多多","阿里巴巴","微博","紛玩島","大麥","百度網盤"];
+
+// 產生下拉清單
+function makeDatalist(id, arr){
+  let h = `<datalist id="${id}">`;
+  arr.forEach(v=>h+=`<option value="${v}">`);
+  return h+"</datalist>";
+}
+
+// 全域計算
+function calcAll(){
+  let sumRmb=0,sumTwdCharge=0,sumTwdGet=0,sumFee=0,sumProfit=0;
+  document.querySelectorAll("#orderBody > tr").forEach(tr=>{
+    sumRmb += Number(tr.querySelector(".realRmb").value)||0;
+    sumTwdCharge += Number(tr.querySelector(".twdCharge").value)||0;
+    sumTwdGet += Number(tr.querySelector(".twdGet").value)||0;
+    sumFee += Number(tr.querySelector(".fee").value)||0;
+    sumProfit += Number(tr.querySelector(".profit").value)||0;
+  })
+  document.getElementById("sumRmb").innerText = sumRmb.toFixed(2);
+  document.getElementById("sumTwdCharge").innerText = sumTwdCharge.toFixed(2);
+  document.getElementById("sumTwdGet").innerText = sumTwdGet.toFixed(2);
+  document.getElementById("sumFee").innerText = sumFee;
+  document.getElementById("sumProfit").innerText = sumProfit.toFixed(2);
+}
+
+// 單筆訂單自動計算
+function calcOrder(tr){
+  let twdGet = Number(tr.querySelector(".twdGet").value)||0;
+  let twdCharge = Number(tr.querySelector(".twdCharge").value)||0;
+  let realRmb = Number(tr.querySelector(".realRmb").value)||0;
+
+  let fee = Math.round(twdGet * 0.015);
+  let rate = realRmb ===0 ? 0 : (twdGet / realRmb);
+  let profit = twdGet - (twdCharge + fee);
+
+  tr.querySelector(".fee").value = fee;
+  tr.querySelector(".rate").value = rate.toFixed(4);
+  tr.querySelector(".profit").value = profit.toFixed(2);
+  calcAll();
+}
+
+// 新增商品細項列
+function addItemRow(box, data={}){
+  let row = document.createElement("tr");
+  row.innerHTML = `
+  <td><input class="i-name" value="${data.name||''}" placeholder="商品名稱"></td>
+  <td><input class="i-style" value="${data.style||''}" placeholder="款式/規格"></td>
+  <td><input class="i-qty" type="number" min="1" value="${data.qty||1}"></td>
+  <td><button class="del" onclick="this.closest('tr').remove();">刪除</button></td>
+  `;
+  box.appendChild(row);
+}
+
+// 新增一筆【主訂單】
+function addOrder(orderData={}){
+  let today = new Date().toISOString().slice(0,10);
+  let tr = document.createElement("tr");
+  tr.className="order-tr";
+  tr.innerHTML = `
+  <td><input class="orderDate" type="date" value="${orderData.orderDate||today}"></td>
+  <td><input class="orderAcc" value="${orderData.orderAcc||''}" placeholder="訂單編號"></td>
+  <td><input class="artist" value="${orderData.artist||''}" placeholder="藝人/IP"></td>
+
+  <td><input list="payList" class="payType" value="${orderData.payType||''}">${makeDatalist("payList",payOpt)}</td>
+  <td><input list="receiveList" class="receiveSource" value="${orderData.receiveSource||''}">${makeDatalist("receiveList",receiveOpt)}</td>
+
+  <td><input class="receiveDate" type="date" value="${orderData.receiveDate||today}"></td>
+  <td><input list="sourceList" class="orderSource" value="${orderData.orderSource||''}">${makeDatalist("sourceList",sourceOpt)}</td>
+
+  <td><input class="oriRmb" type="number" step="0.01" value="${orderData.oriRmb||0}"></td>
+  <td><input class="realRmb" type="number" step="0.01" value="${orderData.realRmb||0}"></td>
+  <td><input class="twdCharge" type="number" step="0.01" value="${orderData.twdCharge||0}"></td>
+  <td><input class="twdGet" type="number" step="0.01" value="${orderData.twdGet||0}"></td>
+
+  <td><input class="fee" readonly value="0"></td>
+  <td><input class="rate" readonly value="0"></td>
+  <td><input class="profit" readonly value="0"></td>
+
+  <td>
+    <input type="file" multiple accept="image/*" class="imgFile">
+    <div class="img-preview"></div>
+    <input class="note" style="margin-top:4px;" value="${orderData.note||''}" placeholder="備註">
+  </td>
+
+  <td><button class="del" onclick="delOrder(this)">刪除訂單</button></td>
+  `;
+
+  let itemWrap = document.createElement("tr");
+  itemWrap.innerHTML = `
+  <td colspan="16" class="item-wrap">
+    <div style="margin-bottom:6px;"><button class="addItem" onclick="addItemRow(this.nextElementSibling)">➕ 新增商品細項</button></div>
+    <table class="item-table">
+      <thead><tr><th>商品名稱</th><th>款式</th><th>數量</th><th>操作</th></tr></thead>
+      <tbody class="itemBody"></tbody>
+    </table>
+  </td>
+  `;
+
+  let calcInputs = tr.querySelectorAll(".realRmb,.twdCharge,.twdGet");
+  calcInputs.forEach(inp=>inp.oninput=()=>calcOrder(tr));
+
+  let file = tr.querySelector(".imgFile");
+  let preview = tr.querySelector(".img-preview");
+  file.onchange = function(){
+    preview.innerHTML="";
+    Array.from(this.files).forEach(f=>{
+      let r = new FileReader();
+      r.onload=e=>{
+        let img = document.createElement("img");
+        img.src=e.target.result;
+        preview.appendChild(img);
+      }
+      r.readAsDataURL(f);
+    })
+  }
+
+  document.querySelector("#orderBody").appendChild(tr);
+  document.querySelector("#orderBody").appendChild(itemWrap);
+
+  if(orderData.items && orderData.items.length>0){
+    let itemBox = itemWrap.querySelector(".itemBody");
+    orderData.items.forEach(it=>addItemRow(itemBox,it));
+  }else{
+    addItemRow(itemWrap.querySelector(".itemBody"));
+  }
+
+  calcOrder(tr);
+}
+
+function delOrder(btn){
+  let tr = btn.closest(".order-tr");
+  tr.nextElementSibling.remove();
+  tr.remove();
+  calcAll();
+}
+
+function getAllOrders(){
+  let list = [];
+  document.querySelectorAll(".order-tr").forEach(tr=>{
+    let itemTr = tr.nextElementSibling;
+    let items = [];
+    itemTr.querySelectorAll(".itemBody tr").forEach(it=>{
+      items.push({
+        name:it.querySelector(".i-name").value,
+        style:it.querySelector(".i-style").value,
+        qty:it.querySelector(".i-qty").value
+      })
+    })
+    let imgs = [];
+    tr.querySelectorAll(".img-preview img").forEach(img=>imgs.push(img.src));
+    list.push({
+      orderDate:tr.querySelector(".orderDate").value,
+      orderAcc:tr.querySelector(".orderAcc").value,
+      artist:tr.querySelector(".artist").value,
+      payType:tr.querySelector(".payType").value,
+      receiveSource:tr.querySelector(".receiveSource").value,
+      receiveDate:tr.querySelector(".receiveDate").value,
+      orderSource:tr.querySelector(".orderSource").value,
+      oriRmb:tr.querySelector(".oriRmb").value,
+      realRmb:tr.querySelector(".realRmb").value,
+      twdCharge:tr.querySelector(".twdCharge").value,
+      twdGet:tr.querySelector(".twdGet").value,
+      fee:tr.querySelector(".fee").value,
+      rate:tr.querySelector(".rate").value,
+      profit:tr.querySelector(".profit").value,
+      note:tr.querySelector(".note").value,
+      imgs:imgs,
+      items:items
+    })
+  })
+  return list;
+}
+
+function saveLocal(){
+  const data = getAllOrders();
+  localStorage.setItem("buyAccountData",JSON.stringify(data));
+  document.getElementById("syncStatus").innerText = "✅ 本機儲存完成";
+  queueSync();
+}
+
+function loadLocal(){
+  let raw = localStorage.getItem("buyAccountData");
+  if(!raw) return;
+  let arr = JSON.parse(raw);
+  arr.forEach(d=>addOrder(d));
+}
+
+function clearAll(){
+  if(!confirm("確定清空所有訂單與商品細項？無法復原！"))return;
+  localStorage.removeItem("buyAccountData");
+  document.getElementById("orderBody").innerHTML="";
+  calcAll();
+}
+
+// 雲端同步
+async function triggerSync(){
+  document.getElementById("syncStatus").innerText = "☁️ 同步上傳中";
+  const data = getAllOrders();
+  try{
+    const res = await fetch(WEB_APP_URL,{
+      method:"POST",
+      body:JSON.stringify(data),
+      headers:{"Content-Type":"application/json"}
+    })
+    const ret = await res.json();
+    if(ret.ok){
+      document.getElementById("syncStatus").innerText = "✅ 雲碟同步成功";
+    }else{
+      document.getElementById("syncStatus").innerText = "❌ 同步失敗："+ret.msg;
+    }
+  }catch(e){
+    document.getElementById("syncStatus").innerText = "🔴 離線，已排入待同步佇列";
+    await saveSyncQueue(data);
+  }
+}
+async function loadCloud(){
+  document.getElementById("syncStatus").innerText = "☁️ 讀取雲端";
+  try{
+    const res = await fetch(WEB_APP_URL);
+    const ret = await res.json();
+    if(ret.ok){
+      document.getElementById("orderBody").innerHTML="";
+      ret.data.forEach(d=>addOrder(d));
+      localStorage.setItem("buyAccountData",JSON.stringify(ret.data));
+      calcAll();
+      document.getElementById("syncStatus").innerText = "✅ 讀取雲端完成";
+    }
+  }catch(e){
+    alert("無法連線雲端，離線模式");
+  }
+}
+
+// 離線佇列 + 背景同步
+async function saveSyncQueue(payload){
+  const q = JSON.parse(localStorage.getItem("syncQueue")||"[]");
+  q.push(payload);
+  localStorage.setItem("syncQueue",JSON.stringify(q));
+}
+async function queueSync(){
+  if('serviceWorker' in navigator && 'SyncManager' in window){
+    const reg = await navigator.serviceWorker.ready;
+    await reg.sync.register("sync-drive");
+  }
+}
+
+// 接收sw訊號
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register("sw.js").then(reg=>{
+    reg.addEventListener("message",async ev=>{
+      if(ev.data.type==="DO_SYNC"){
+        const q = JSON.parse(localStorage.getItem("syncQueue")||"[]");
+        for(const item of q){
+          await fetch(https://script.google.com/macros/s/AKfycbxp6lQi7oIKpPCVXZH8y3kVj77y4DaixDbZauSHQCfAb2Zih61l6okXRKf7GwY4NJTggg/exec,{method:"POST",body:JSON.stringify(item),headers:{"Content-Type":"application/json"}});
+        }
+        localStorage.removeItem("syncQueue");
+      }
+    })
+  }).catch(e=>console.log("SW失敗",e));
+}
+
+loadLocal();
+</script>
 </body>
 </html>
