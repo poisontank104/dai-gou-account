@@ -1,760 +1,576 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>代購記帳系統</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>代購記帳</title>
 <style>
-*{box-sizing:border-box;font-family:system-ui, sans-serif;margin:0;padding:0}
-body{padding:16px;background:#f7f5ff;color:#333}
-h2{color:#6b4fc7;margin-bottom:16px}
-.section{background:#fff;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px #00000012}
-.group-title{background:#9370db;color:#fff;padding:10px 14px;border-radius:10px;margin:12px 0;font-weight:bold;font-size:18px}
-.row{display:grid;grid-template-columns: repeat(auto-fit, minmax(190px,1fr));gap:10px;margin-bottom:10px}
-.item{display:flex;flex-direction:column;position:relative}
-label{font-size:13px;color:#555;margin-bottom:4px}
-input, select, textarea{padding:8px 10px;border:1px solid #d9d2ee;border-radius:8px;font-size:14px}
-input[type="number"]{inputmode:decimal}
-input::placeholder{color:#bbbbbb;opacity:0.3}
-button{cursor:pointer;border:none;border-radius:9px;padding:9px 14px;font-size:14px}
-.btn-primary{background:#9370db;color:#fff}
-.btn-success{background:#48b870;color:#fff}
-.btn-warning{background:#e6a849;color:#fff}
-.btn-danger{background:#dd5555;color:#fff}
-.btn-add-line{opacity:0.7;background:#b8a0e8;color:#fff;margin:8px 0}
-.btn-bottom-bar{width:100%;margin-top:12px;display:flex;gap:10px}
-.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.photo-preview img{width:100px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #ddd}
-.product-block{border:1px dashed #c9bcee;border-radius:10px;padding:12px;margin:10px 0}
-.record-card{border:1px solid #e5e0f7;border-radius:12px;padding:14px;margin:10px 0}
-.record-card .action-bar{margin-top:10px;display:flex;gap:8px}
-.modal{position:fixed;inset:0;background:#00000044;display:flex;align-items:center;justify-content:center;padding:16px;z-index:999}
-.modal-inner{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:1100px;max-height:90vh;overflow-y:auto}
-.hidden{display:none !important}
-.note{grid-column:1/-1}
-.datalist-wrap{position:relative}
-.datalist-suggest{position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:1px solid #ddd;border-radius:0 0 8px 8px;z-index:100;max-height:160px;overflow-y:auto}
-.datalist-suggest div{padding:7px 10px;cursor:pointer}
-.datalist-suggest div:hover{background:#f0ecfc}
+:root{
+  --main-purple:#e9e4f5;
+  --purple-dark:#b8aed8;
+  --blue-light:#c8d8f0;
+  --green-light:#d0e9dd;
+  --text:#333;
+  --bg:white;
+  --border:#ddd;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, sans-serif;}
+body{background:var(--main-purple);color:var(--text);padding:12px;}
+.container{max-width:900px;margin:0 auto;background:var(--bg);border-radius:16px;padding:16px;box-shadow:0 2px 8px #00000012;}
+h1{text-align:center;margin-bottom:16px;color:#7b68a8;font-size:22px;}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.stat-card{padding:12px;border-radius:12px;background:var(--main-purple);text-align:center;font-weight:bold;}
+.btn-group{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+button{padding:10px 14px;border:none;border-radius:10px;cursor:pointer;font-size:15px;}
+.btn-add{background:#947fc7;color:white;font-weight:bold;}
+.btn-mode1{background:var(--blue-light);}
+.btn-mode2{background:var(--green-light);}
+.filter-bar{margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.form-wrap{display:none;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;}
+.form-wrap.active{display:block;}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px,1fr));gap:10px;margin-bottom:10px;}
+label{font-size:14px;display:block;margin-bottom:4px;}
+input,select{width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:15px;}
+input[type="number"]{inputmode:decimal;}
+.auto-suggest{position:relative;}
+.suggest-list{position:absolute;background:white;border:1px solid #ddd;border-radius:0 0 8px 8px;z-index:99;top:100%;left:0;right:0;max-height:160px;overflow-y:auto;display:none;}
+.suggest-item{padding:8px 10px;cursor:pointer;}
+.suggest-item:hover{background:#f2f0fa;}
+.photo-area{margin:10px 0;}
+.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.photo-preview img{width:80px;height:80px;object-fit:cover;border-radius:6px;}
+.item-card{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;}
+.item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.item-actions button{padding:6px 8px;font-size:13px;margin-left:4px;}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;}
+th,td{border:1px solid #eee;padding:8px;text-align:left;}
+th{background:var(--main-purple);}
+@media(max-width:600px){
+  .stat-row{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
-<h2>📒 代購記帳</h2>
-<div class="section">
-  <h3>新增訂單</h3>
-  <div id="formWrap">
-    <div class="row">
-      <div class="item">
+<div class="container">
+  <h1>代購記帳</h1>
+  <div class="stat-row">
+    <div class="stat-card">本月總支出¥ <span id="sumCny">0.00</span></div>
+    <div class="stat-card">本月總支出$ <span id="sumTwd">0</span></div>
+  </div>
+  <div class="filter-bar">
+    <label>彙整區間</label>
+    <input type="date" id="startDate">
+    <input type="date" id="endDate">
+    <button onclick="renderAll()">全部資料</button>
+    <button onclick="renderRange()">區間彙整</button>
+  </div>
+  <div class="btn-group">
+    <button class="btn-add" onclick="openForm('normal')">新增帳務｜單品項</button>
+    <button class="btn-mode1" onclick="openForm('multi')">新增帳務｜多品項</button>
+    <button class="btn-mode2" onclick="openForm('exch')">新增帳務｜儲值/換匯</button>
+  </div>
+
+  <!-- 單品 / 多品項表單 -->
+  <div id="formMain" class="form-wrap">
+    <input type="hidden" id="editId">
+    <div class="form-row">
+      <div>
         <label>訂購日期</label>
         <input type="date" id="orderDate">
       </div>
-      <div class="item datalist-wrap">
+      <div class="auto-suggest">
         <label>訂購帳號</label>
-        <input type="text" id="orderAccount">
-        <div class="datalist-suggest hidden" id="suggest_orderAccount"></div>
+        <input type="text" id="orderNo" oninput="showSuggest('orderNo', this.value)">
+        <div class="suggest-list" id="suggest-orderNo"></div>
       </div>
-      <div class="item datalist-wrap">
+    </div>
+    <div class="form-row">
+      <div class="auto-suggest">
         <label>藝人</label>
-        <input type="text" id="artist">
-        <div class="datalist-suggest hidden" id="suggest_artist"></div>
+        <input type="text" id="artist" oninput="showSuggest('artist', this.value)">
+        <div class="suggest-list" id="suggest-artist"></div>
+      </div>
+      <div>
+        <label>商品名稱</label>
+        <input type="text" id="prodName">
       </div>
     </div>
-
-    <h4 style="margin:10px 0">商品組（可多組）</h4>
-    <div id="productList"></div>
-    <button class="btn-add-line" onclick="addProductRow()">+ 新增商品組</button>
-
-    <div class="row">
-      <div class="item">
+    <div class="form-row">
+      <div>
+        <label>款式</label>
+        <input type="text" id="style">
+      </div>
+      <div>
+        <label>數量</label>
+        <input type="number" id="qty" min="0" step="1">
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
         <label>原人民幣金額¥</label>
-        <input type="number" step="0.01" id="oriRmb">
+        <input type="number" id="oriCny" step="0.01">
       </div>
-      <div class="item">
+      <div>
         <label>實付人民幣金額¥</label>
-        <input type="number" step="0.01" id="payRmb" oninput="calcAll()">
+        <input type="number" id="payCny" step="0.01" oninput="calcMain()">
       </div>
-      <div class="item">
+      <div>
         <label>實付台幣金額$</label>
-        <input type="number" step="0.01" id="payTwd" oninput="calcAll()">
+        <input type="number" id="payTwd" step="0.01" oninput="calcMain()">
       </div>
-      <div class="item">
+      <div>
         <label>預計刷卡手續費$</label>
-        <input type="number" id="fee" readonly>
+        <input type="number" id="feeTwd" readonly>
       </div>
-      <div class="item">
+      <div>
         <label>實際利潤$</label>
-        <input type="number" step="0.01" id="profit" readonly>
+        <input type="number" id="profitTwd" readonly>
       </div>
-      <div class="item">
+      <div>
         <label>匯率</label>
-        <input type="number" step="0.0001" id="rate" readonly>
+        <input type="number" id="rate" readonly step="0.0001">
       </div>
     </div>
-
-    <div class="row">
-      <div class="item">
+    <div class="form-row">
+      <div>
         <label>實收台幣金額$</label>
-        <input type="number" step="0.01" id="receiveTwd" oninput="calcAll()">
+        <input type="number" id="recvTwd" step="0.01" oninput="calcMain()">
       </div>
-      <div class="item">
-        <label>付款方式</label>
-        <select id="payType">
-          <option>支付寶¥-中信</option>
-          <option>支付寶¥-國泰</option>
-          <option>支付寶-¥餘額</option>
-          <option>微信¥-中信</option>
-          <option>微信¥-國泰</option>
-          <option>微信-¥餘額</option>
-          <option>中信$</option>
-          <option>郵局$</option>
-          <option>台新$</option>
-          <option>國泰$</option>
-          <option>台灣配$</option>
-          <option value="_other">其它</option>
-        </select>
-        <input type="text" id="payTypeCustom" class="hidden" placeholder="輸入付款方式">
-      </div>
-      <div class="item">
+      <div>
         <label>收款來源</label>
-        <select id="receiveSource">
-          <option>中信$</option>
-          <option>郵局$</option>
-          <option>中信無卡$</option>
-          <option>台新$</option>
-          <option>台新無卡$</option>
-          <option>國泰$</option>
-          <option>台灣配$</option>
-          <option>LINE BANK</option>
-          <option>i pass money</option>
-          <option>line pay money</option>
-          <option value="_other">其它</option>
-        </select>
-        <input type="text" id="receiveSourceCustom" class="hidden" placeholder="輸入收款來源">
+        <select id="recvSource" onchange="otherSelect(this,'recvSource')"></select>
       </div>
-      <div class="item">
+      <div>
         <label>收款日期</label>
-        <input type="date" id="receiveDate">
+        <input type="date" id="recvDate">
       </div>
     </div>
-
-    <div class="row">
-      <div class="item">
-        <label>下單來源</label>
-        <select id="sourceSel">
-          <option>淘寶</option>
-          <option>淘寶（騰訊）</option>
-          <option>淘寶（優酷）</option>
-          <option>淘寶（愛奇藝）</option>
-          <option>騰訊</option>
-          <option>優酷</option>
-          <option>愛奇藝</option>
-          <option>小芒</option>
-          <option>微店</option>
-          <option>微信（拼團呀）</option>
-          <option>微信（拼谷）</option>
-          <option>閑魚</option>
-          <option>小紅書</option>
-          <option>抖音</option>
-          <option>京東</option>
-          <option>QQ音樂</option>
-          <option>酷狗音樂</option>
-          <option>網易雲</option>
-          <option>拼多多</option>
-          <option>阿里巴巴</option>
-          <option>微博</option>
-          <option>紛玩島</option>
-          <option>大麥</option>
-          <option>百度網盤</option>
-          <option value="_other">其它</option>
-        </select>
-        <input type="text" id="sourceCustom" class="hidden" placeholder="自訂下單來源">
+    <div class="form-row">
+      <div>
+        <label>下單平台</label>
+        <select id="platform" onchange="otherSelect(this,'platform')"></select>
       </div>
-      <div class="item datalist-wrap">
+      <div class="auto-suggest">
         <label>店面名稱</label>
-        <input type="text" id="shopName">
-        <div class="datalist-suggest hidden" id="suggest_shopName"></div>
-      </div>
-      <div class="item">
-        <label>資訊發布來源</label>
-        <input type="text" id="infoSource" placeholder="後援會名稱/官方名稱">
-      </div>
-      <div class="item">
-        <label>網址</label>
-        <input type="text" id="urlField">
+        <input type="text" id="shopName" oninput="showSuggest('shopName', this.value)">
+        <div class="suggest-list" id="suggest-shopName"></div>
       </div>
     </div>
-
-    <div class="row">
-      <div class="item">
-        <label>照片（多張上傳）</label>
-        <input type="file" id="photoInput" accept="image/*" multiple>
-        <div class="photo-preview" id="photoPreview"></div>
-      </div>
-      <div class="item note">
-        <label>備註</label>
-        <textarea id="note" rows="3"></textarea>
-      </div>
+    <div class="photo-area">
+      <label>照片（可多張）</label>
+      <input type="file" id="photoInput" accept="image/*" multiple onchange="uploadPhoto()">
+      <div class="photo-preview" id="photoPreview"></div>
+      <input type="hidden" id="photoArr">
     </div>
-
-    <div class="btn-bottom-bar">
-      <button class="btn-success" onclick="submitRecord()">✅ 儲存</button>
-      <button class="btn-primary" onclick="goHome()">🏠 首頁</button>
+    <div>
+      <label>備註</label>
+      <input type="text" id="remark">
+    </div>
+    <div class="btn-group" style="margin-top:12px;">
+      <button onclick="saveItem()">儲存</button>
+      <button onclick="closeForm()">取消</button>
     </div>
   </div>
-</div>
 
-<div class="section">
-  <h3>📋 全部記帳紀錄</h3>
-  <div id="recordList"></div>
-</div>
-
-<!-- 編輯彈窗 -->
-<div class="modal hidden" id="editModal">
-  <div class="modal-inner">
-    <h3>編輯訂單</h3>
-    <input type="hidden" id="editId">
-    <div class="row">
-      <div class="item">
-        <label>訂購日期</label>
-        <input type="date" id="e_orderDate">
+  <!-- 儲值換匯表單 -->
+  <div id="formExch" class="form-wrap">
+    <input type="hidden" id="editIdExch">
+    <div class="form-row">
+      <div>
+        <label>交易日期</label>
+        <input type="date" id="exchDate">
       </div>
-      <div class="item">
-        <label>訂購帳號</label>
-        <input type="text" id="e_orderAccount">
+      <div>
+        <label>支付金額¥</label>
+        <input type="number" id="exchCny" step="0.01" oninput="calcExch()">
       </div>
-      <div class="item">
-        <label>藝人</label>
-        <input type="text" id="e_artist">
+      <div>
+        <label>支付金額$</label>
+        <input type="number" id="exchTwd" step="0.01" oninput="calcExch()">
       </div>
-    </div>
-    <h4 style="margin:10px 0">商品組</h4>
-    <div id="e_productList"></div>
-    <button class="btn-add-line" onclick="addEditProductRow()">+ 新增商品組</button>
-    <div class="row">
-      <div class="item">
-        <label>原人民幣金額¥</label>
-        <input type="number" step="0.01" id="e_oriRmb">
+      <div>
+        <label>刷卡手續$</label>
+        <input type="number" id="exchFee" readonly>
       </div>
-      <div class="item">
-        <label>實付人民幣金額¥</label>
-        <input type="number" step="0.01" id="e_payRmb" oninput="calcEditAll()">
-      </div>
-      <div class="item">
-        <label>實付台幣金額$</label>
-        <input type="number" step="0.01" id="e_payTwd" oninput="calcEditAll()">
-      </div>
-      <div class="item">
-        <label>預計刷卡手續費$</label>
-        <input type="number" id="e_fee" readonly>
-      </div>
-      <div class="item">
-        <label>實際利潤$</label>
-        <input type="number" step="0.01" id="e_profit" readonly>
-      </div>
-      <div class="item">
+      <div>
         <label>匯率</label>
-        <input type="number" step="0.0001" id="e_rate" readonly>
+        <input type="number" id="exchRate" readonly step="0.0001">
       </div>
     </div>
-    <div class="row">
-      <div class="item">
-        <label>實收台幣金額$</label>
-        <input type="number" step="0.01" id="e_receiveTwd" oninput="calcEditAll()">
-      </div>
-      <div class="item">
-        <label>付款方式</label>
-        <select id="e_payType">
-          <option>支付寶¥-中信</option>
-          <option>支付寶¥-國泰</option>
-          <option>支付寶-¥餘額</option>
-          <option>微信¥-中信</option>
-          <option>微信¥-國泰</option>
-          <option>微信-¥餘額</option>
-          <option>中信$</option>
-          <option>郵局$</option>
-          <option>台新$</option>
-          <option>國泰$</option>
-          <option>台灣配$</option>
-          <option value="_other">其它</option>
-        </select>
-        <input type="text" id="e_payTypeCustom" class="hidden">
-      </div>
-      <div class="item">
-        <label>收款來源</label>
-        <select id="e_receiveSource">
-          <option>中信$</option>
-          <option>郵局$</option>
-          <option>中信無卡$</option>
-          <option>台新$</option>
-          <option>台新無卡$</option>
-          <option>國泰$</option>
-          <option>台灣配$</option>
-          <option>LINE BANK</option>
-          <option>i pass money</option>
-          <option>line pay money</option>
-          <option value="_other">其它</option>
-        </select>
-        <input type="text" id="e_receiveSourceCustom" class="hidden">
-      </div>
-      <div class="item">
-        <label>收款日期</label>
-        <input type="date" id="e_receiveDate">
-      </div>
-    </div>
-    <div class="row">
-      <div class="item">
-        <label>下單來源</label>
-        <select id="e_sourceSel">
-          <option>淘寶</option>
-          <option>淘寶（騰訊）</option>
-          <option>淘寶（優酷）</option>
-          <option>淘寶（愛奇藝）</option>
-          <option>騰訊</option>
-          <option>優酷</option>
-          <option>愛奇藝</option>
-          <option>小芒</option>
-          <option>微店</option>
-          <option>微信（拼團呀）</option>
-          <option>微信（拼谷）</option>
-          <option>閑魚</option>
-          <option>小紅書</option>
-          <option>抖音</option>
-          <option>京東</option>
-          <option>QQ音樂</option>
-          <option>酷狗音樂</option>
-          <option>網易雲</option>
-          <option>拼多多</option>
-          <option>阿里巴巴</option>
-          <option>微博</option>
-          <option>紛玩島</option>
-          <option>大麥</option>
-          <option>百度網盤</option>
-          <option value="_other">其它</option>
-        </select>
-        <input type="text" id="e_sourceCustom" class="hidden">
-      </div>
-      <div class="item">
-        <label>店面名稱</label>
-        <input type="text" id="e_shopName">
-      </div>
-      <div class="item">
-        <label>資訊發布來源</label>
-        <input type="text" id="e_infoSource">
-      </div>
-      <div class="item">
-        <label>網址</label>
-        <input type="text" id="e_urlField">
-      </div>
-    </div>
-    <div class="row">
-      <div class="item">
-        <label>照片</label>
-        <input type="file" id="e_photoInput" accept="image/*" multiple>
-        <div class="photo-preview" id="e_photoPreview"></div>
-      </div>
-      <div class="item note">
-        <label>備註</label>
-        <textarea id="e_note" rows="3"></textarea>
-      </div>
-    </div>
-    <div style="margin-top:12px;display:flex;gap:8px">
-      <button class="btn-success" onclick="saveEdit()">儲存修改</button>
-      <button class="btn-danger" onclick="closeEditModal()">取消</button>
+    <div class="btn-group" style="margin-top:12px;">
+      <button onclick="saveExch()">儲存</button>
+      <button onclick="closeForm()">取消</button>
     </div>
   </div>
+
+  <div id="listWrap"></div>
 </div>
 
 <script>
-let photoList = [];
-let editPhotoList = [];
-let allRecords = JSON.parse(localStorage.getItem("buyRecords")) || [];
-let autoComplete = JSON.parse(localStorage.getItem("autoComplete")) || {
-  orderAccount: [],
-  artist: [],
-  shopName: [],
-  payType: ["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"],
-  receiveSource: ["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"],
-  sourceSel: ["淘寶","淘寶（騰訊）","淘寶（優酷）","淘寶（愛奇藝）","騰訊","優酷","愛奇藝","小芒","微店","微信（拼團呀）","微信（拼谷）","閑魚","小紅書","抖音","京東","QQ音樂","酷狗音樂","網易雲","拼多多","阿里巴巴","微博","紛玩島","大麥","百度網盤"]
+// ========== 基礎常數、預設選單 ==========
+const STORAGE_KEY = "代购BookData";
+const BASE_RECV_SOURCE = ["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"];
+const BASE_PLATFORM = ["淘寶","淘寶（騰訊）","淘寶（優酷）","淘寶（愛奇藝）","騰訊","優酷","愛奇藝","小芒","微店","微信（拼團呀）","微信（拼谷）","閑魚","小紅書","抖音","京東","QQ音樂","酷狗音樂","網易雲","拼多多","阿里巴巴","微博","紛玩島","大麥","百度網盤"];
+const BASE_PAYWAY = ["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"];
+
+let data = {
+  products:[],
+  history:{
+    orderNo:[],
+    artist:[],
+    shopName:[],
+    recvSource:[...BASE_RECV_SOURCE],
+    platform:[...BASE_PLATFORM],
+    payWay:[...BASE_PAYWAY]
+  }
 };
 
-function saveAutoComplete(){
-  localStorage.setItem("autoComplete", JSON.stringify(autoComplete));
-}
-function saveRecords(){
-  localStorage.setItem("buyRecords", JSON.stringify(allRecords));
-}
-
-function getTodayStr(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
-}
-
-document.querySelector("#orderDate").value = getTodayStr();
-document.querySelector("#receiveDate").value = getTodayStr();
-addProductRow();
-renderAll();
-
-// 下拉切換其它輸入框
-document.querySelector("#payType").onchange = function(){
-  document.querySelector("#payTypeCustom").classList.toggle("hidden", this.value!="_other");
-}
-document.querySelector("#receiveSource").onchange = function(){
-  document.querySelector("#receiveSourceCustom").classList.toggle("hidden", this.value!="_other");
-}
-document.querySelector("#sourceSel").onchange = function(){
-  document.querySelector("#sourceCustom").classList.toggle("hidden", this.value!="_other");
-}
-document.querySelector("#e_payType").onchange = function(){
-  document.querySelector("#e_payTypeCustom").classList.toggle("hidden", this.value!="_other");
-}
-document.querySelector("#e_receiveSource").onchange = function(){
-  document.querySelector("#e_receiveSourceCustom").classList.toggle("hidden", this.value!="_other");
-}
-document.querySelector("#e_sourceSel").onchange = function(){
-  document.querySelector("#e_sourceCustom").classList.toggle("hidden", this.value!="_other");
-}
-
-// 自動建議下拉
-function bindSuggest(inputId, suggestId, keyName){
-  const inp = document.getElementById(inputId);
-  const sugWrap = document.getElementById(suggestId);
-  inp.oninput = ()=>{
-    const val = inp.value.trim().toLowerCase();
-    sugWrap.innerHTML = "";
-    if(val.length===0){ sugWrap.classList.add("hidden"); return; }
-    const filter = autoComplete[keyName].filter(x=>x.toLowerCase().includes(val));
-    if(filter.length===0){ sugWrap.classList.add("hidden"); return; }
-    filter.forEach(item=>{
-      const div = document.createElement("div");
-      div.innerText = item;
-      div.onclick = ()=>{ inp.value = item; sugWrap.classList.add("hidden"); };
-      sugWrap.appendChild(div);
-    })
-    sugWrap.classList.remove("hidden");
+// ========== 舊資料遷移 Migrate（相容判斷） ==========
+function loadData(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{
+      const old = JSON.parse(raw);
+      // 判斷是舊格式（舊expense陣列）
+      if(Array.isArray(old) && old.length>0 && !old.products){
+        data.products = old.map(item=>{
+          return {
+            type:"migrated", // 標記舊轉換
+            orderDate:item.date||"",
+            orderNo:item.orderNo||"",
+            artist:item.artist||"",
+            prodName:item.name||"",
+            style:item.style||"",
+            qty:item.qty||1,
+            oriCny:item.oriCny||0,
+            payCny:item.cny||0,
+            payTwd:item.twd||0,
+            recvTwd:item.recvTwd||0,
+            feeTwd:Math.round((item.recvTwd||0)*0.015),
+            profitTwd: (item.recvTwd||0) - ((item.twd||0)+Math.round((item.recvTwd||0)*0.015)),
+            rate: (item.twd||0)/(item.cny||1),
+            recvSource:item.recvSource||"",
+            recvDate:item.recvDate||"",
+            platform:item.platform||"",
+            shopName:item.shopName||"",
+            photos:item.photos||[],
+            remark:item.remark||""
+          }
+        })
+      }else if(old.products){
+        data = old;
+      }
+    }catch(e){console.error(e);}
   }
-  document.addEventListener("click",(e)=>{
-    if(!inp.contains(e.target) && !sugWrap.contains(e.target)) sugWrap.classList.add("hidden");
+  fillSelect("recvSource");
+  fillSelect("platform");
+  renderAll();
+}
+function saveStorage(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// ========== 下拉選單 ==========
+function fillSelect(key){
+  const sel = document.getElementById(key);
+  if(!sel) return;
+  sel.innerHTML = "";
+  data.history[key].forEach(v=>{
+    const opt = document.createElement("option");opt.value=v;opt.innerText=v;sel.appendChild(opt);
   })
+  const optOther = document.createElement("option");opt.value="_OTHER_";opt.innerText="其他";sel.appendChild(optOther);
 }
-bindSuggest("orderAccount","suggest_orderAccount","orderAccount");
-bindSuggest("artist","suggest_artist","artist");
-bindSuggest("shopName","suggest_shopName","shopName");
-
-// 新增商品列
-function addProductRow(){
-  const wrap = document.getElementById("productList");
-  const div = document.createElement("div");
-  div.className="product-block";
-  div.innerHTML = `
-  <div class="row">
-    <div class="item"><label>商品名稱</label><input type="text" class="p_name"></div>
-    <div class="item"><label>款式</label><input type="text" class="p_style"></div>
-    <div class="item"><label>數量</label><input type="number" class="p_qty" value="1"></div>
-    <div class="item"><button class="btn-danger" onclick="this.closest('.product-block').remove()">刪除這組</button></div>
-  </div>`;
-  wrap.appendChild(div);
-}
-function addEditProductRow(){
-  const wrap = document.getElementById("e_productList");
-  const div = document.createElement("div");
-  div.className="product-block";
-  div.innerHTML = `
-  <div class="row">
-    <div class="item"><label>商品名稱</label><input type="text" class="ep_name"></div>
-    <div class="item"><label>款式</label><input type="text" class="ep_style"></div>
-    <div class="item"><label>數量</label><input type="number" class="ep_qty" value="1"></div>
-    <div class="item"><button class="btn-danger" onclick="this.closest('.product-block').remove()">刪除這組</button></div>
-  </div>`;
-  wrap.appendChild(div);
-}
-
-// 計算公式
-function calcAll(){
-  const receiveTwd = Number(document.querySelector("#receiveTwd").value||0);
-  const payTwd = Number(document.querySelector("#payTwd").value||0);
-  const payRmb = Number(document.querySelector("#payRmb").value||0);
-  const fee = Math.round(receiveTwd * 0.015);
-  const profit = receiveTwd - (payTwd + fee);
-  const rate = payRmb>0 ? (payTwd / payRmb).toFixed(4) : 0;
-  document.querySelector("#fee").value = fee;
-  document.querySelector("#profit").value = profit.toFixed(2);
-  document.querySelector("#rate").value = rate;
-}
-function calcEditAll(){
-  const receiveTwd = Number(document.querySelector("#e_receiveTwd").value||0);
-  const payTwd = Number(document.querySelector("#e_payTwd").value||0);
-  const payRmb = Number(document.querySelector("#e_payRmb").value||0);
-  const fee = Math.round(receiveTwd * 0.015);
-  const profit = receiveTwd - (payTwd + fee);
-  const rate = payRmb>0 ? (payTwd / payRmb).toFixed(4) : 0;
-  document.querySelector("#e_fee").value = fee;
-  document.querySelector("#e_profit").value = profit.toFixed(2);
-  document.querySelector("#e_rate").value = rate;
-}
-
-// 照片處理
-document.querySelector("#photoInput").onchange = async function(e){
-  for(let f of e.target.files){
-    photoList.push(await fileToBase64(f));
+function otherSelect(el, key){
+  if(el.value === "_OTHER_"){
+    const val = prompt("輸入新選項：");
+    if(val && val.trim()){
+      const v = val.trim();
+      if(!data.history[key].includes(v)) data.history[key].push(v);
+      fillSelect(key);
+      el.value = v;
+      saveStorage();
+    }
   }
-  renderPhotoPreview();
 }
-document.querySelector("#e_photoInput").onchange = async function(e){
-  for(let f of e.target.files){
-    editPhotoList.push(await fileToBase64(f));
-  }
-  renderEditPhotoPreview();
+
+// ========== 自動建議下拉 ==========
+function showSuggest(key, val){
+  const wrap = document.getElementById("suggest-"+key);
+  wrap.innerHTML="";
+  if(!val.trim()){wrap.style.display="none";return;}
+  const list = data.history[key]||[];
+  const match = list.filter(x=>x.toLowerCase().includes(val.toLowerCase()));
+  if(match.length===0){wrap.style.display="none";return;}
+  match.forEach(t=>{
+    const div = document.createElement("div");div.className="suggest-item";div.innerText=t;
+    div.onclick=()=>{document.getElementById(key).value=t;wrap.style.display="none";};
+    wrap.appendChild(div);
+  })
+  wrap.style.display="block";
 }
-function fileToBase64(file){
-  return new Promise(resolve=>{
+function pushHistory(key, val){
+  if(!val||!val.trim()) return;
+  const v = val.trim();
+  if(!data.history[key]) data.history[key]=[];
+  if(!data.history[key].includes(v)) data.history[key].push(v);
+}
+
+// ========== 自動計算 ==========
+function calcMain(){
+  const recvTwd = Number(document.getElementById("recvTwd").value||0);
+  const payTwd = Number(document.getElementById("payTwd").value||0);
+  const payCny = Number(document.getElementById("payCny").value||0);
+  const fee = Math.round(recvTwd * 0.015);
+  const profit = recvTwd - (payTwd + fee);
+  const rate = payCny>0 ? (payTwd / payCny).toFixed(4) : "";
+  document.getElementById("feeTwd").value = fee;
+  document.getElementById("profitTwd").value = profit;
+  document.getElementById("rate").value = rate;
+}
+function calcExch(){
+  const exchTwd = Number(document.getElementById("exchTwd").value||0);
+  const exchCny = Number(document.getElementById("exchCny").value||0);
+  const fee = Math.round(exchTwd * 0.015);
+  const rate = exchCny>0 ? (exchTwd / exchCny).toFixed(4) : "";
+  document.getElementById("exchFee").value = fee;
+  document.getElementById("exchRate").value = rate;
+}
+
+// ========== 照片上傳 ==========
+let tempPhotos = [];
+function uploadPhoto(){
+  const files = document.getElementById("photoInput").files;
+  for(let f of files){
     const r = new FileReader();
-    r.onload = ()=>resolve(r.result);
-    r.readAsDataURL(file);
-  })
+    r.onload = e=>{
+      tempPhotos.push(e.target.result);
+      renderPhotoPreview();
+    }
+    r.readAsDataURL(f);
+  }
 }
 function renderPhotoPreview(){
-  const wrap = document.getElementById("photoPreview");
-  wrap.innerHTML = "";
-  photoList.forEach((src,i)=>{
-    wrap.innerHTML += `<div><img src="${src}"><button onclick="photoList.splice(${i},1);renderPhotoPreview()">X</button></div>`
+  const wrap = document.getElementById("photoPreview");wrap.innerHTML="";
+  tempPhotos.forEach((src,i)=>{
+    const img = document.createElement("img");img.src=src;
+    img.onclick=()=>{tempPhotos.splice(i,1);renderPhotoPreview();}
+    wrap.appendChild(img);
   })
-}
-function renderEditPhotoPreview(){
-  const wrap = document.getElementById("e_photoPreview");
-  wrap.innerHTML = "";
-  editPhotoList.forEach((src,i)=>{
-    wrap.innerHTML += `<div><img src="${src}"><button onclick="editPhotoList.splice(${i},1);renderEditPhotoPreview()">X</button></div>`
-  })
+  document.getElementById("photoArr").value = JSON.stringify(tempPhotos);
 }
 
-// 收集商品
-function getProductList(selector){
-  const arr = [];
-  document.querySelectorAll(selector).forEach(block=>{
-    arr.push({
-      name:block.querySelector(".p_name, .ep_name").value,
-      style:block.querySelector(".p_style, .ep_style").value,
-      qty:block.querySelector(".p_qty, .ep_qty").value
-    })
-  })
-  return arr;
-}
-
-// 新增儲存
-function submitRecord(){
-  let payType = document.querySelector("#payType").value;
-  if(payType==="_other") payType = document.querySelector("#payTypeCustom").value.trim();
-  let receiveSource = document.querySelector("#receiveSource").value;
-  if(receiveSource==="_other") receiveSource = document.querySelector("#receiveSourceCustom").value.trim();
-  let sourceSel = document.querySelector("#sourceSel").value;
-  if(sourceSel==="_other") sourceSel = document.querySelector("#sourceCustom").value.trim();
-
-  // 自動記憶選項
-  if(payType && !autoComplete.payType.includes(payType)) autoComplete.payType.push(payType);
-  if(receiveSource && !autoComplete.receiveSource.includes(receiveSource)) autoComplete.receiveSource.push(receiveSource);
-  if(sourceSel && !autoComplete.sourceSel.includes(sourceSel)) autoComplete.sourceSel.push(sourceSel);
-  const acc = document.querySelector("#orderAccount").value.trim();
-  const art = document.querySelector("#artist").value.trim();
-  const shop = document.querySelector("#shopName").value.trim();
-  if(acc && !autoComplete.orderAccount.includes(acc)) autoComplete.orderAccount.push(acc);
-  if(art && !autoComplete.artist.includes(art)) autoComplete.artist.push(art);
-  if(shop && !autoComplete.shopName.includes(shop)) autoComplete.shopName.push(shop);
-  saveAutoComplete();
-
-  const data = {
-    id:Date.now().toString(),
-    orderDate:document.querySelector("#orderDate").value,
-    orderAccount:acc,
-    artist:art,
-    products:getProductList("#productList .product-block"),
-    oriRmb:document.querySelector("#oriRmb").value,
-    payRmb:document.querySelector("#payRmb").value,
-    payTwd:document.querySelector("#payTwd").value,
-    fee:document.querySelector("#fee").value,
-    profit:document.querySelector("#profit").value,
-    rate:document.querySelector("#rate").value,
-    receiveTwd:document.querySelector("#receiveTwd").value,
-    payType:payType,
-    receiveSource:receiveSource,
-    receiveDate:document.querySelector("#receiveDate").value,
-    sourceSel:sourceSel,
-    shopName:shop,
-    infoSource:document.querySelector("#infoSource").value,
-    urlField:document.querySelector("#urlField").value,
-    photos:photoList,
-    note:document.querySelector("#note").value
+// ========== 表單開關、新增/編輯 ==========
+let currMode = "";
+function openForm(mode){
+  closeForm();
+  currMode = mode;
+  const today = new Date().toISOString().split("T")[0];
+  if(mode==="normal" || mode==="multi"){
+    document.getElementById("formMain").classList.add("active");
+    document.getElementById("orderDate").value = today;
+    document.getElementById("recvDate").value = today;
+    tempPhotos=[];renderPhotoPreview();
+    document.getElementById("editId").value="";
+  }else if(mode==="exch"){
+    document.getElementById("formExch").classList.add("active");
+    document.getElementById("exchDate").value = today;
+    document.getElementById("editIdExch").value="";
   }
-  allRecords.push(data);
-  saveRecords();
-  alert("✅ 儲存成功，可繼續輸入新訂單");
-  resetForm();
+}
+function closeForm(){
+  document.querySelectorAll(".form-wrap").forEach(x=>x.classList.remove("active"));
+  currMode="";
+}
+function saveItem(){
+  const obj = {
+    type: currMode,
+    orderDate:document.getElementById("orderDate").value,
+    orderNo:document.getElementById("orderNo").value,
+    artist:document.getElementById("artist").value,
+    prodName:document.getElementById("prodName").value,
+    style:document.getElementById("style").value,
+    qty:Number(document.getElementById("qty").value||0),
+    oriCny:Number(document.getElementById("oriCny").value||0),
+    payCny:Number(document.getElementById("payCny").value||0),
+    payTwd:Number(document.getElementById("payTwd").value||0),
+    feeTwd:Number(document.getElementById("feeTwd").value||0),
+    profitTwd:Number(document.getElementById("profitTwd").value||0),
+    rate:Number(document.getElementById("rate").value||0),
+    recvTwd:Number(document.getElementById("recvTwd").value||0),
+    recvSource:document.getElementById("recvSource").value,
+    recvDate:document.getElementById("recvDate").value,
+    platform:document.getElementById("platform").value,
+    shopName:document.getElementById("shopName").value,
+    photos:tempPhotos,
+    remark:document.getElementById("remark").value
+  }
+  pushHistory("orderNo", obj.orderNo);
+  pushHistory("artist", obj.artist);
+  pushHistory("shopName", obj.shopName);
+  pushHistory("recvSource", obj.recvSource);
+  pushHistory("platform", obj.platform);
+  const eid = document.getElementById("editId").value;
+  if(eid){
+    data.products[eid] = obj;
+  }else{
+    data.products.push(obj);
+  }
+  saveStorage();
+  closeForm();
+  renderAll();
+}
+function saveExch(){
+  const obj = {
+    type:"exch",
+    exchDate:document.getElementById("exchDate").value,
+    exchCny:Number(document.getElementById("exchCny").value||0),
+    exchTwd:Number(document.getElementById("exchTwd").value||0),
+    exchFee:Number(document.getElementById("exchFee").value||0),
+    exchRate:Number(document.getElementById("exchRate").value||0)
+  }
+  const eid = document.getElementById("editIdExch").value;
+  if(eid){
+    data.products[eid] = obj;
+  }else{
+    data.products.push(obj);
+  }
+  saveStorage();
+  closeForm();
   renderAll();
 }
 
-function resetForm(){
-  document.querySelector("#orderDate").value = getTodayStr();
-  document.querySelector("#receiveDate").value = getTodayStr();
-  document.querySelector("#orderAccount").value = "";
-  document.querySelector("#artist").value = "";
-  document.querySelector("#oriRmb").value = "";
-  document.querySelector("#payRmb").value = "";
-  document.querySelector("#payTwd").value = "";
-  document.querySelector("#fee").value = "";
-  document.querySelector("#profit").value = "";
-  document.querySelector("#rate").value = "";
-  document.querySelector("#receiveTwd").value = "";
-  document.querySelector("#payType").value = autoComplete.payType[0];
-  document.querySelector("#payTypeCustom").value = "";
-  document.querySelector("#payTypeCustom").classList.add("hidden");
-  document.querySelector("#receiveSource").value = autoComplete.receiveSource[0];
-  document.querySelector("#receiveSourceCustom").value = "";
-  document.querySelector("#receiveSourceCustom").classList.add("hidden");
-  document.querySelector("#sourceSel").value = autoComplete.sourceSel[0];
-  document.querySelector("#sourceCustom").value = "";
-  document.querySelector("#sourceCustom").classList.add("hidden");
-  document.querySelector("#shopName").value = "";
-  document.querySelector("#infoSource").value = "";
-  document.querySelector("#urlField").value = "";
-  document.querySelector("#note").value = "";
-  photoList = []; renderPhotoPreview();
-  document.getElementById("productList").innerHTML=""; addProductRow();
-}
-
-function goHome(){
-  resetForm();
-  window.scrollTo(0,0);
-}
-
-// 渲染列表、年月分組
-function renderAll(){
-  const group = {};
-  allRecords.forEach(r=>{
-    const [y,m] = r.orderDate.split("-");
-    const key = `${y}-${m}`;
-    if(!group[key]) group[key]=[];
-    group[key].push(r);
+// ========== 渲染清單 + 統計 ==========
+function calcSum(list){
+  let sumCny = 0, sumTwd = 0;
+  list.forEach(it=>{
+    if(it.type!=="exch"){
+      sumCny += Number(it.payCny||0);
+      sumTwd += (Number(it.payTwd||0)+Number(it.feeTwd||0));
+    }
   })
-  const wrap = document.getElementById("recordList");
-  wrap.innerHTML = "";
-  Object.keys(group).sort().reverse().forEach(ym=>{
-    wrap.innerHTML += `<div class="group-title">📅 ${ym}</div>`;
-    group[ym].forEach(rec=>{
-      wrap.innerHTML += `
-      <div class="record-card">
-        <div><b>訂購帳號：</b>${rec.orderAccount}｜<b>藝人：</b>${rec.artist}</div>
-        <div><b>訂購日期：</b>${rec.orderDate}</div>
-        <div><b>商品：</b>${rec.products.map(p=>`${p.name} ${p.style} ×${p.qty}`).join("、")}</div>
-        <div><b>店面名稱：</b>${rec.shopName}</div>
-        <div><b>實收台幣：</b>$${rec.receiveTwd}｜<b>實際利潤：</b>$${rec.profit}</div>
-        <div class="action-bar">
-          <button class="btn-warning" onclick="openEdit('${rec.id}')">✏️ 編輯</button>
+  document.getElementById("sumCny").innerText = sumCny.toFixed(2);
+  document.getElementById("sumTwd").innerText = Math.round(sumTwd);
+}
+function renderItems(list){
+  const wrap = document.getElementById("listWrap");wrap.innerHTML="";
+  list.forEach((it,idx)=>{
+    const card = document.createElement("div");card.className="item-card";
+    if(it.type==="exch"){
+      card.innerHTML = `
+        <div class="item-head"><b>儲值/換匯｜${it.exchDate}</b>
+          <div>
+            <button onclick="editItem(${idx})">編輯</button>
+            <button onclick="delItem(${idx})">刪除</button>
+          </div>
         </div>
-      </div>`
-    })
+        <table>
+          <tr><td>支付¥</td><td>${it.exchCny}</td><td>支付$</td><td>${it.exchTwd}</td></tr>
+          <tr><td>手續$</td><td>${it.exchFee}</td><td>匯率</td><td>${it.exchRate}</td></tr>
+        </table>
+      `
+    }else{
+      card.innerHTML = `
+        <div class="item-head"><b>${it.orderDate}｜${it.artist} ${it.prodName}</b>
+          <div>
+            <button onclick="editItem(${idx})">編輯</button>
+            <button onclick="delItem(${idx})">刪除</button>
+          </div>
+        </div>
+        <table>
+          <tr>
+            <td>訂購帳號</td><td>${it.orderNo||"-"}</td>
+            <td>款式</td><td>${it.style||"-"}</td>
+            <td>數量</td><td>${it.qty}</td>
+          </tr>
+          <tr>
+            <td>原¥</td><td>${it.oriCny}</td>
+            <td>實付¥</td><td>${it.payCny}</td>
+            <td>實付$</td><td>${it.payTwd}</td>
+          </tr>
+          <tr>
+            <td>手續$</td><td>${it.feeTwd}</td>
+            <td>利潤$</td><td>${it.profitTwd}</td>
+            <td>匯率</td><td>${it.rate}</td>
+          </tr>
+          <tr>
+            <td>實收$</td><td>${it.recvTwd}</td>
+            <td>收款來源</td><td>${it.recvSource||"-"}</td>
+            <td>收款日</td><td>${it.recvDate||"-"}</td>
+          </tr>
+          <tr>
+            <td>平台</td><td>${it.platform||"-"}</td>
+            <td>店面</td><td>${it.shopName||"-"}</td>
+            <td>備註</td><td>${it.remark||"-"}</td>
+          </tr>
+        </table>
+        ${it.photos && it.photos.length>0 ? `<div class="photo-preview">${it.photos.map(x=>`<img src="${x}">`).join("")}</div>`:""}
+      `
+    }
+    wrap.appendChild(card);
   })
 }
-
-// 編輯彈窗
-function openEdit(id){
-  const rec = allRecords.find(x=>x.id===id);
-  if(!rec) return;
-  document.querySelector("#editId").value = rec.id;
-  document.querySelector("#e_orderDate").value = rec.orderDate;
-  document.querySelector("#e_orderAccount").value = rec.orderAccount;
-  document.querySelector("#e_artist").value = rec.artist;
-  document.querySelector("#e_oriRmb").value = rec.oriRmb;
-  document.querySelector("#e_payRmb").value = rec.payRmb;
-  document.querySelector("#e_payTwd").value = rec.payTwd;
-  document.querySelector("#e_fee").value = rec.fee;
-  document.querySelector("#e_profit").value = rec.profit;
-  document.querySelector("#e_rate").value = rec.rate;
-  document.querySelector("#e_receiveTwd").value = rec.receiveTwd;
-  document.querySelector("#e_payType").value = autoComplete.payType.includes(rec.payType) ? rec.payType : "_other";
-  document.querySelector("#e_payTypeCustom").value = autoComplete.payType.includes(rec.payType) ? "" : rec.payType;
-  document.querySelector("#e_payTypeCustom").classList.toggle("hidden", autoComplete.payType.includes(rec.payType));
-  document.querySelector("#e_receiveSource").value = autoComplete.receiveSource.includes(rec.receiveSource) ? rec.receiveSource : "_other";
-  document.querySelector("#e_receiveSourceCustom").value = autoComplete.receiveSource.includes(rec.receiveSource) ? "" : rec.receiveSource;
-  document.querySelector("#e_receiveSourceCustom").classList.toggle("hidden", autoComplete.receiveSource.includes(rec.receiveSource));
-  document.querySelector("#e_sourceSel").value = autoComplete.sourceSel.includes(rec.sourceSel) ? rec.sourceSel : "_other";
-  document.querySelector("#e_sourceCustom").value = autoComplete.sourceSel.includes(rec.sourceSel) ? "" : rec.sourceSel;
-  document.querySelector("#e_sourceCustom").classList.toggle("hidden", autoComplete.sourceSel.includes(rec.sourceSel));
-  document.querySelector("#e_shopName").value = rec.shopName;
-  document.querySelector("#e_infoSource").value = rec.infoSource;
-  document.querySelector("#e_urlField").value = rec.urlField;
-  document.querySelector("#e_note").value = rec.note;
-  editPhotoList = rec.photos || [];
-  renderEditPhotoPreview();
-  const epWrap = document.getElementById("e_productList");
-  epWrap.innerHTML="";
-  rec.products.forEach(p=>{
-    const div = document.createElement("div");
-    div.className="product-block";
-    div.innerHTML = `
-    <div class="row">
-      <div class="item"><label>商品名稱</label><input type="text" class="ep_name" value="${p.name}"></div>
-      <div class="item"><label>款式</label><input type="text" class="ep_style" value="${p.style}"></div>
-      <div class="item"><label>數量</label><input type="number" class="ep_qty" value="${p.qty}"></div>
-      <div class="item"><button class="btn-danger" onclick="this.closest('.product-block').remove()">刪除這組</button></div>
-    </div>`;
-    epWrap.appendChild(div);
+function renderAll(){
+  calcSum(data.products);
+  renderItems(data.products);
+}
+function renderRange(){
+  const s = document.getElementById("startDate").value;
+  const e = document.getElementById("endDate").value;
+  if(!s || !e) return alert("請選起訖日期");
+  const filtered = data.products.filter(x=>{
+    const d = x.type==="exch" ? x.exchDate : x.orderDate;
+    return d >= s && d <= e;
   })
-  document.getElementById("editModal").classList.remove("hidden");
+  calcSum(filtered);
+  renderItems(filtered);
 }
-function closeEditModal(){
-  document.getElementById("editModal").classList.add("hidden");
-}
-function saveEdit(){
-  const id = document.querySelector("#editId").value;
-  let payType = document.querySelector("#e_payType").value;
-  if(payType==="_other") payType = document.querySelector("#e_payTypeCustom").value.trim();
-  let receiveSource = document.querySelector("#e_receiveSource").value;
-  if(receiveSource==="_other") receiveSource = document.querySelector("#e_receiveSourceCustom").value.trim();
-  let sourceSel = document.querySelector("#e_sourceSel").value;
-  if(sourceSel==="_other") sourceSel = document.querySelector("#e_sourceCustom").value.trim();
-
-  if(payType && !autoComplete.payType.includes(payType)) autoComplete.payType.push(payType);
-  if(receiveSource && !autoComplete.receiveSource.includes(receiveSource)) autoComplete.receiveSource.push(receiveSource);
-  if(sourceSel && !autoComplete.sourceSel.includes(sourceSel)) autoComplete.sourceSel.push(sourceSel);
-  const acc = document.querySelector("#e_orderAccount").value.trim();
-  const art = document.querySelector("#e_artist").value.trim();
-  const shop = document.querySelector("#e_shopName").value.trim();
-  if(acc && !autoComplete.orderAccount.includes(acc)) autoComplete.orderAccount.push(acc);
-  if(art && !autoComplete.artist.includes(art)) autoComplete.artist.push(art);
-  if(shop && !autoComplete.shopName.includes(shop)) autoComplete.shopName.push(shop);
-  saveAutoComplete();
-
-  const data = {
-    id:id,
-    orderDate:document.querySelector("#e_orderDate").value,
-    orderAccount:acc,
-    artist:art,
-    products:getProductList("#e_productList .product-block"),
-    oriRmb:document.querySelector("#e_oriRmb").value,
-    payRmb:document.querySelector("#e_payRmb").value,
-    payTwd:document.querySelector("#e_payTwd").value,
-    fee:document.querySelector("#e_fee").value,
-    profit:document.querySelector("#e_profit").value,
-    rate:document.querySelector("#e_rate").value,
-    receiveTwd:document.querySelector("#e_receiveTwd").value,
-    payType:payType,
-    receiveSource:receiveSource,
-    receiveDate:document.querySelector("#e_receiveDate").value,
-    sourceSel:sourceSel,
-    shopName:shop,
-    infoSource:document.querySelector("#e_infoSource").value,
-    urlField:document.querySelector("#e_urlField").value,
-    photos:editPhotoList,
-    note:document.querySelector("#e_note").value
+function editItem(idx){
+  const it = data.products[idx];
+  if(it.type==="exch"){
+    openForm("exch");
+    document.getElementById("editIdExch").value=idx;
+    document.getElementById("exchDate").value=it.exchDate;
+    document.getElementById("exchCny").value=it.exchCny;
+    document.getElementById("exchTwd").value=it.exchTwd;
+    calcExch();
+  }else{
+    openForm(it.type==="multi"?"multi":"normal");
+    document.getElementById("editId").value=idx;
+    document.getElementById("orderDate").value=it.orderDate;
+    document.getElementById("orderNo").value=it.orderNo;
+    document.getElementById("artist").value=it.artist;
+    document.getElementById("prodName").value=it.prodName;
+    document.getElementById("style").value=it.style;
+    document.getElementById("qty").value=it.qty;
+    document.getElementById("oriCny").value=it.oriCny;
+    document.getElementById("payCny").value=it.payCny;
+    document.getElementById("payTwd").value=it.payTwd;
+    document.getElementById("recvTwd").value=it.recvTwd;
+    document.getElementById("recvSource").value=it.recvSource;
+    document.getElementById("recvDate").value=it.recvDate;
+    document.getElementById("platform").value=it.platform;
+    document.getElementById("shopName").value=it.shopName;
+    document.getElementById("remark").value=it.remark;
+    tempPhotos = it.photos || [];
+    renderPhotoPreview();
+    calcMain();
   }
-  const idx = allRecords.findIndex(x=>x.id===id);
-  allRecords[idx] = data;
-  saveRecords();
-  alert("✅ 修改儲存完成");
-  closeEditModal();
+}
+function delItem(idx){
+  if(!confirm("確認刪除這筆帳務？")) return;
+  data.products.splice(idx,1);
+  saveStorage();
   renderAll();
+}
+
+window.onload = ()=>{
+  loadData();
+  // 點空白關閉建議選單
+  document.addEventListener("click",(ev)=>{
+    if(!ev.target.closest(".auto-suggest")){
+      document.querySelectorAll(".suggest-list").forEach(x=>x.style.display="none");
+    }
+  })
 }
 </script>
 </body>
