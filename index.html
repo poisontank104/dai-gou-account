@@ -75,7 +75,17 @@ const { createApp, ref, reactive, computed, watch, onMounted, nextTick } = Vue;
 const { createPinia, defineStore } = Pinia;
 const { createRouter, createWebHashHistory } = VueRouter;
 
-// ========== 資料遷移轉換函數（舊格式自動轉新products結構） ==========
+// 安全讀取 localStorage，壞掉就回傳預設值
+function safeParse(str, fallback) {
+  try {
+    if(!str) return fallback;
+    return JSON.parse(str);
+  } catch(e) {
+    console.warn("localStorage 資料損壞，自動重置", e);
+    return fallback;
+  }
+}
+
 function convertOldRecord(old){
   if(!old) return null;
   const newRec = {
@@ -112,7 +122,6 @@ function convertOldRecord(old){
   return newRec;
 }
 
-// ========== Pinia Store ==========
 const useRecordStore = defineStore('record',{
   state:()=>({
     rawList:[],
@@ -157,12 +166,11 @@ const useRecordStore = defineStore('record',{
   },
   actions:{
     load(){
-      const raw = localStorage.getItem("代购RecordRaw");
-      if(raw) this.rawList = JSON.parse(raw);
-      const sug = localStorage.getItem("suggestion");
-      if(sug) this.suggestion = JSON.parse(sug);
+      const raw = safeParse(localStorage.getItem("代购RecordRaw"), []);
+      this.rawList = raw;
+      const sug = safeParse(localStorage.getItem("suggestion"), {orderAccount:[],dramaTag:[],shopName:[]});
+      this.suggestion = sug;
 
-      // ✅ 重點修復：舊selectOpts和預設合併，缺少的key補上預設陣列
       const defaultOpts = {
         payMethod:["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"],
         receiveSource:["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"],
@@ -170,12 +178,10 @@ const useRecordStore = defineStore('record',{
         targetUser:["解語花","友宜集運"],
         purpose:["換匯","儲值集運"]
       }
-      const optsStr = localStorage.getItem("selectOpts");
-      if(optsStr){
-        const savedOpts = JSON.parse(optsStr);
-        // 只補不存在的key，已經有的保留（你新增的選項不會丟掉）
+      const savedOpts = safeParse(localStorage.getItem("selectOpts"), null);
+      if(savedOpts && typeof savedOpts === "object"){
         for(const k in defaultOpts){
-          if(!savedOpts[k]){
+          if(!savedOpts[k] || !Array.isArray(savedOpts[k])){
             savedOpts[k] = [...defaultOpts[k]]
           }
         }
@@ -244,7 +250,6 @@ const useRecordStore = defineStore('record',{
   }
 })
 
-// ========== 路由 ==========
 const routes = [
   {path:'/expense',component:{
     template:`
@@ -581,7 +586,6 @@ const routes = [
       }
       function uploadImg(e,type){
         const files = e.target.files;
-        const fr = new FileReader();
         for(let f of files){
           const reader = new FileReader();
           reader.onload = ev=>{
