@@ -4,9 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>代購記帳</title>
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-<script src="https://unpkg.com/pinia@2/dist/pinia.iife.prod.js"></script>
-<script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
+<!-- 改用 jsDelivr，GitHub Pages 環境穩定度更高 -->
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pinia@2/dist/pinia.iife.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-router@4/dist/vue-router.global.prod.js"></script>
 <style>
 :root{
   --main-purple: #e9e4f5;
@@ -63,32 +64,42 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 .record-item{padding:12px;border-radius:10px;background:#fff;margin-bottom:10px;border:1px solid var(--border-color);cursor:pointer;}
 .record-item:hover{background:#f8f6fc;}
 .finance-filter{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.error-tip{padding:20px;color:red;text-align:center;font-size:16px;}
 @media(max-width:640px){
   .row-3,.row-4,.stat-row{grid-template-columns:1fr;}
 }
 </style>
 </head>
 <body>
-<div id="app" class="container"></div>
-<script>
-const { createApp, ref, reactive, computed, watch, onMounted, nextTick } = Vue;
-const { createPinia, defineStore } = Pinia;
-const { createRouter, createWebHashHistory } = VueRouter;
+<div id="app" class="container">
+  <div class="error-tip" v-if="loadError">
+    ⚠️ JS資源載入失敗，請重新整理頁面，切換網路環境。
+  </div>
+</div>
 
-// 安全讀取 localStorage，壞掉就回傳預設值
+<script>
+window.onerror = function(msg,url,line){
+  const appDiv = document.getElementById('app');
+  if(appDiv){
+    appDiv.innerHTML = `<div class="error-tip">程式發生錯誤：${msg}<br/>請嘗試清除快取(Ctrl+Shift+R)或是切換網路</div>`;
+  }
+};
+
+// 安全解析localStorage
 function safeParse(str, fallback) {
   try {
     if(!str) return fallback;
     return JSON.parse(str);
   } catch(e) {
-    console.warn("localStorage 資料損壞，自動重置", e);
+    console.warn("localStorage資料損壞", e);
     return fallback;
   }
 }
 
+//舊紀錄轉換
 function convertOldRecord(old){
   if(!old) return null;
-  const newRec = {
+  return {
     id: old.id || crypto.randomUUID(),
     recordType: "single",
     orderAccount: old.orderAccount || "",
@@ -119,17 +130,16 @@ function convertOldRecord(old){
     targetUser:"",
     purpose:""
   }
-  return newRec;
 }
+
+const { createApp, ref, reactive, computed, onMounted } = Vue;
+const { createPinia, defineStore } = Pinia;
+const { createRouter, createWebHashHistory } = VueRouter;
 
 const useRecordStore = defineStore('record',{
   state:()=>({
     rawList:[],
-    suggestion:{
-      orderAccount:[],
-      dramaTag:[],
-      shopName:[]
-    },
+    suggestion:{ orderAccount:[], dramaTag:[], shopName:[] },
     selectOpts:{
       payMethod:["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"],
       receiveSource:["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"],
@@ -170,7 +180,6 @@ const useRecordStore = defineStore('record',{
       this.rawList = raw;
       const sug = safeParse(localStorage.getItem("suggestion"), {orderAccount:[],dramaTag:[],shopName:[]});
       this.suggestion = sug;
-
       const defaultOpts = {
         payMethod:["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"],
         receiveSource:["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"],
@@ -181,41 +190,26 @@ const useRecordStore = defineStore('record',{
       const savedOpts = safeParse(localStorage.getItem("selectOpts"), null);
       if(savedOpts && typeof savedOpts === "object"){
         for(const k in defaultOpts){
-          if(!savedOpts[k] || !Array.isArray(savedOpts[k])){
-            savedOpts[k] = [...defaultOpts[k]]
-          }
+          if(!savedOpts[k] || !Array.isArray(savedOpts[k])) savedOpts[k] = [...defaultOpts[k]];
         }
         this.selectOpts = savedOpts;
       }else{
-        this.selectOpts = {...defaultOpts}
+        this.selectOpts = {...defaultOpts};
       }
     },
-    saveRaw(){
-      localStorage.setItem("代购RecordRaw",JSON.stringify(this.rawList));
-    },
-    saveSuggest(){
-      localStorage.setItem("suggestion",JSON.stringify(this.suggestion));
-    },
-    saveOpts(){
-      localStorage.setItem("selectOpts",JSON.stringify(this.selectOpts));
-    },
+    saveRaw(){ localStorage.setItem("代购RecordRaw",JSON.stringify(this.rawList)); },
+    saveSuggest(){ localStorage.setItem("suggestion",JSON.stringify(this.suggestion)); },
+    saveOpts(){ localStorage.setItem("selectOpts",JSON.stringify(this.selectOpts)); },
     addSuggest(key,val){
       if(!val) return;
-      if(!this.suggestion[key].includes(val)){
-        this.suggestion[key].push(val);
-        this.saveSuggest();
-      }
+      if(!this.suggestion[key].includes(val)){ this.suggestion[key].push(val); this.saveSuggest(); }
     },
     addOpt(key,val){
       if(!val) return;
-      if(!this.selectOpts[key].includes(val)){
-        this.selectOpts[key].push(val);
-        this.saveOpts();
-      }
+      if(!this.selectOpts[key].includes(val)){ this.selectOpts[key].push(val); this.saveOpts(); }
     },
     addRecord(rec){
-      this.rawList.push(rec);
-      this.saveRaw();
+      this.rawList.push(rec); this.saveRaw();
       this.addSuggest("orderAccount",rec.orderAccount);
       this.addSuggest("dramaTag",rec.dramaTag);
       this.addSuggest("shopName",rec.shopName);
@@ -228,8 +222,7 @@ const useRecordStore = defineStore('record',{
     updateRecord(id,newRec){
       const idx = this.rawList.findIndex(i=>i.id===id);
       if(idx>-1){
-        this.rawList[idx] = newRec;
-        this.saveRaw();
+        this.rawList[idx] = newRec; this.saveRaw();
         this.addSuggest("orderAccount",newRec.orderAccount);
         this.addSuggest("dramaTag",newRec.dramaTag);
         this.addSuggest("shopName",newRec.shopName);
@@ -242,15 +235,13 @@ const useRecordStore = defineStore('record',{
     },
     delRecord(id){
       const idx = this.rawList.findIndex(i=>i.id===id);
-      if(idx>-1){
-        this.rawList.splice(idx,1);
-        this.saveRaw();
-      }
+      if(idx>-1){ this.rawList.splice(idx,1); this.saveRaw(); }
     }
   }
 })
 
 const routes = [
+  {path:'/', redirect:'/expense'},
   {path:'/expense',component:{
     template:`
       <div>
@@ -279,10 +270,7 @@ const routes = [
                     <div class="suggest-item" v-for="s in sugList.orderAccount" @click="pickSug('orderAccount','single',s)">{{s}}</div>
                   </div>
                 </div>
-                <div>
-                  <label>訂購日期</label>
-                  <input v-model="formSingle.orderDate" type="date"/>
-                </div>
+                <div><label>訂購日期</label><input v-model="formSingle.orderDate" type="date"/></div>
               </div>
               <div class="row row-3">
                 <div class="autocomplete-wrap">
@@ -347,12 +335,8 @@ const routes = [
                 </div>
               </div>
               <div class="form-title">照片</div>
-              <div class="upload-box">📷
-                <input type="file" multiple accept="image/*" @change="uploadImg($event,'single')"/>
-              </div>
-              <div class="img-preview">
-                <img v-for="(i,idx) in formSingle.imgs" :key="idx" :src="i" @click="previewImg(i)" style="cursor:pointer"/>
-              </div>
+              <div class="upload-box">📷<input type="file" multiple accept="image/*" @change="uploadImg($event,'single')"/></div>
+              <div class="img-preview"><img v-for="(i,idx) in formSingle.imgs" :key="idx" :src="i" @click="previewImg(i)" style="cursor:pointer"/></div>
               <div class="form-title">備註</div>
               <input v-model="formSingle.remark"/>
               <div style="margin-top:14px;display:flex;gap:8px;">
@@ -435,12 +419,8 @@ const routes = [
                 </div>
               </div>
               <div class="form-title">照片</div>
-              <div class="upload-box">📷
-                <input type="file" multiple accept="image/*" @change="uploadImg($event,'multi')"/>
-              </div>
-              <div class="img-preview">
-                <img v-for="(i,idx) in formMulti.imgs" :key="idx" :src="i" @click="previewImg(i)" style="cursor:pointer"/>
-              </div>
+              <div class="upload-box">📷<input type="file" multiple accept="image/*" @change="uploadImg($event,'multi')"/></div>
+              <div class="img-preview"><img v-for="(i,idx) in formMulti.imgs" :key="idx" :src="i" @click="previewImg(i)" style="cursor:pointer"/></div>
               <div class="form-title">備註</div>
               <input v-model="formMulti.remark"/>
               <div style="margin-top:14px;display:flex;gap:8px;">
@@ -450,10 +430,7 @@ const routes = [
             </div>
             <div class="collapse-header collapse-exchange" @click="tabExchange=!tabExchange">帳務｜儲值/換匯 <span>{{tabExchange?'−':'+'}}</span></div>
             <div v-if="tabExchange">
-              <div class="row row-2">
-                <div><label>交易日期</label><input v-model="formEx.tradeDate" type="date"/></div>
-                <div></div>
-              </div>
+              <div class="row row-2"><div><label>交易日期</label><input v-model="formEx.tradeDate" type="date"/></div><div></div></div>
               <div class="row row-3">
                 <div><label>支付金額 ¥</label><input v-model.number="formEx.payCNY" type="number" inputmode="decimal" @input="calcEx"/></div>
                 <div><label>支付金額 $</label><input v-model.number="formEx.payTWD" type="number" inputmode="decimal" @input="calcEx"/></div>
@@ -514,11 +491,7 @@ const routes = [
       const formEx = reactive({
         id:"",recordType:"exchange",tradeDate:today,payCNY:0,payTWD:0,exchangeFeeTWD:0,rate:0,targetUser:"",targetUserOther:"",purpose:"",purposeOther:""
       })
-      function openModal(){
-        editId.value="";
-        resetForm();
-        modalShow.value=true;
-      }
+      function openModal(){ editId.value=""; resetForm(); modalShow.value=true; }
       function resetForm(){
         const t = new Date().toISOString().split('T')[0];
         Object.assign(formSingle,{id:"",recordType:"single",orderAccount:"",orderDate:t,dramaTag:"",productName:"",style:"",qty:1,
@@ -531,16 +504,9 @@ const routes = [
       }
       function editRec(r){
         editId.value=r.id;
-        if(r.recordType==='single'){
-          Object.assign(formSingle,JSON.parse(JSON.stringify(r)));
-          tabSingle.value=true;tabMulti.value=false;tabExchange.value=false;
-        }else if(r.recordType==='multi'){
-          Object.assign(formMulti,JSON.parse(JSON.stringify(r)));
-          tabSingle.value=false;tabMulti.value=true;tabExchange.value=false;
-        }else{
-          Object.assign(formEx,JSON.parse(JSON.stringify(r)));
-          tabSingle.value=false;tabMulti.value=false;tabExchange.value=true;
-        }
+        if(r.recordType==='single'){ Object.assign(formSingle,JSON.parse(JSON.stringify(r))); tabSingle.value=true;tabMulti.value=false;tabExchange.value=false; }
+        else if(r.recordType==='multi'){ Object.assign(formMulti,JSON.parse(JSON.stringify(r))); tabSingle.value=false;tabMulti.value=true;tabExchange.value=false; }
+        else{ Object.assign(formEx,JSON.parse(JSON.stringify(r))); tabSingle.value=false;tabMulti.value=false;tabExchange.value=true; }
         modalShow.value=true;
       }
       function calcSingle(){
@@ -567,11 +533,7 @@ const routes = [
       }
       function handleSel(key,type){
         let f = type==='single'?formSingle:type==='multi'?formMulti:formEx;
-        if(f[key]==='__other__'){
-          f[key] = f[key+"Other"] || "";
-        }else{
-          f[key+"Other"] = "";
-        }
+        if(f[key]==='__other__') f[key] = f[key+"Other"] || ""; else f[key+"Other"] = "";
       }
       function filterSug(key,type){
         const f = type==='single'?formSingle:type==='multi'?formMulti:formEx;
@@ -588,10 +550,7 @@ const routes = [
         const files = e.target.files;
         for(let f of files){
           const reader = new FileReader();
-          reader.onload = ev=>{
-            if(type==='single') formSingle.imgs.push(ev.target.result);
-            if(type==='multi') formMulti.imgs.push(ev.target.result);
-          }
+          reader.onload = ev=>{ if(type==='single') formSingle.imgs.push(ev.target.result); if(type==='multi') formMulti.imgs.push(ev.target.result); }
           reader.readAsDataURL(f);
         }
       }
@@ -601,11 +560,7 @@ const routes = [
         if(rec.payMethod==='__other__') rec.payMethod = rec.payMethodOther;
         if(rec.receiveSource==='__other__') rec.receiveSource = rec.receiveSourceOther;
         if(rec.platform==='__other__') rec.platform = rec.platformOther;
-        if(editId.value){
-          rec.id=editId.value;store.updateRecord(editId.value,rec);
-        }else{
-          rec.id = crypto.randomUUID();store.addRecord(rec);
-        }
+        editId.value ? (rec.id=editId.value,store.updateRecord(editId.value,rec)) : (rec.id = crypto.randomUUID(),store.addRecord(rec));
         modalShow.value=false;
       }
       function saveMulti(){
@@ -613,22 +568,14 @@ const routes = [
         if(rec.payMethod==='__other__') rec.payMethod = rec.payMethodOther;
         if(rec.receiveSource==='__other__') rec.receiveSource = rec.receiveSourceOther;
         if(rec.platform==='__other__') rec.platform = rec.platformOther;
-        if(editId.value){
-          rec.id=editId.value;store.updateRecord(editId.value,rec);
-        }else{
-          rec.id = crypto.randomUUID();store.addRecord(rec);
-        }
+        editId.value ? (rec.id=editId.value,store.updateRecord(editId.value,rec)) : (rec.id = crypto.randomUUID(),store.addRecord(rec));
         modalShow.value=false;
       }
       function saveEx(){
         const rec = JSON.parse(JSON.stringify(formEx));
         if(rec.targetUser==='__other__') rec.targetUser = rec.targetUserOther;
         if(rec.purpose==='__other__') rec.purpose = rec.purposeOther;
-        if(editId.value){
-          rec.id=editId.value;store.updateRecord(editId.value,rec);
-        }else{
-          rec.id = crypto.randomUUID();store.addRecord(rec);
-        }
+        editId.value ? (rec.id=editId.value,store.updateRecord(editId.value,rec)) : (rec.id = crypto.randomUUID(),store.addRecord(rec));
         modalShow.value=false;
       }
       onMounted(()=>store.load())
@@ -680,11 +627,18 @@ const routes = [
     }
   }}
 ]
+
 const router = createRouter({history:createWebHashHistory(),routes})
 const pinia = createPinia();
-const app = createApp({});
+const app = createApp({
+  setup(){
+    const loadError = ref(false);
+    return { loadError };
+  }
+});
 app.use(pinia);
 app.use(router);
 app.mount('#app');
 </script>
+</body>
 </html>
