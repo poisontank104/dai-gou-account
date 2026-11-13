@@ -1,666 +1,877 @@
-<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>代購記帳</title>
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-<script src="https://unpkg.com/pinia@2/dist/pinia.iife.prod.js"></script>
-<script src="https://unpkg.com/vue-router@4/dist/vue-router.global.prod.js"></script>
 <style>
 :root{
-  --main-purple: #e9e4f5;
-  --card-single: #d8cfee;
-  --card-multi: #dcebf8;
-  --card-exchange: #dcf2e8;
-  --text-primary: #2c2c2c;
-  --text-secondary: #666;
-  --border-color: #d1c8e6;
-  --btn-primary: #b8a9dd;
-  --btn-hover: #a492d0;
-  --danger: #e57373;
-  --success: #81c784;
-  --white: #ffffff;
-  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --main-purple:#e9e4f5;
+  --purple-dark:#b8aed8;
+  --blue-light:#c8d8f0;
+  --yellow-light:#fff4cc;
+  --text:#333;
+  --bg:white;
+  --border:#ddd;
 }
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;}
-body{background:var(--main-purple);color:var(--text-primary);padding:12px;}
-.container{max-width:1000px;margin:0 auto;}
-.nav-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
-.nav-btn{padding:10px 16px;border:none;border-radius:10px;background:var(--btn-primary);color:#fff;font-weight:500;cursor:pointer;transition:0.2s;}
-.nav-btn:hover{background:var(--btn-hover);}
-.nav-btn.active{box-shadow:0 0 0 2px #fff;}
-.card{background:var(--white);border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid var(--border-color);}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, sans-serif;}
+body{background:var(--main-purple);color:var(--text);padding:12px;}
+.container{max-width:900px;margin:0 auto;background:var(--bg);border-radius:16px;padding:16px;box-shadow:0 2px 8px #00000012;}
+h1{text-align:center;margin-bottom:16px;color:#7b68a8;font-size:22px;}
 .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
-.stat-item{padding:16px;border-radius:10px;text-align:center;font-weight:500;}
-.stat-item:nth-child(1){background:#d8cfee;}
-.stat-item:nth-child(2){background:#dcebf8;}
-.form-title{font-weight:600;margin:12px 0 6px;font-size:1.05rem;}
-.sub-title{font-weight:600;margin:18px 0 8px;font-size:1.1rem;}
-.row{display:grid;gap:10px;margin-bottom:10px;align-items:center;}
-.row-2{grid-template-columns:1fr 1fr;}
-.row-3{grid-template-columns:0.8fr 1.4fr 0.6fr;}
-.row-4{grid-template-columns:0.7fr 1fr 0.6fr 0.5fr;}
-input, select{padding:10px;border:1px solid var(--border-color);border-radius:8px;font-size:1rem;background:#fff;}
-input[type="number"]{-moz-appearance:textfield;}
-input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{display:none;}
-.autocomplete-wrap{position:relative;}
-.suggest-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--border-color);border-radius:8px;z-index:99;max-height:160px;overflow-y:auto;}
+.stat-card{padding:12px;border-radius:12px;background:var(--main-purple);text-align:center;font-weight:bold;}
+.search-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;padding:10px;border:1px solid #eee;border-radius:10px;}
+.single-collapse{margin-bottom:10px;border:1px solid #eee;border-radius:10px;overflow:hidden;}
+.single-collapse-header{padding:10px 14px;cursor:pointer;font-weight:bold;display:flex;justify-content:space-between;align-items:center;}
+/* 三個面板標題底色 */
+#header-single{background:#d9d0ee;}
+#header-multi{background:var(--blue-light);}
+#header-exch{background:var(--yellow-light);}
+.single-collapse-content{padding:12px;display:none;}
+.single-collapse-content.open{display:block;}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap;}
+button{padding:10px 14px;border:none;border-radius:10px;cursor:pointer;font-size:15px;}
+.btn-add{background:#947fc7;color:white;font-weight:bold;}
+.btn-mode1{background:var(--blue-light);}
+.btn-mode2{background:var(--green-light);}
+.filter-bar{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:12px;border-top:1px solid #eee;}
+.form-wrap{display:none;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;}
+.form-wrap.active{display:block;}
+.form-row{display:grid;gap:10px;margin-bottom:10px;align-items:end;}
+.row-2col{grid-template-columns:1fr 1fr;}
+.row-4col{grid-template-columns:1.2fr 2fr 0.8fr 0.8fr;}
+.row-3col{grid-template-columns:1fr 1fr 1fr;}
+.row-4short{grid-template-columns:1fr 1fr 1fr 1fr;}
+.row-2short{grid-template-columns:1fr 1fr;}
+label{font-size:14px;display:block;margin-bottom:4px;}
+input,select{width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:15px;}
+input[type="number"]{inputmode:decimal;}
+.auto-suggest{position:relative;}
+.suggest-list{position:absolute;background:white;border:1px solid #ddd;border-radius:0 0 8px 8px;z-index:99;top:100%;left:0;right:0;max-height:160px;overflow-y:auto;display:none;}
 .suggest-item{padding:8px 10px;cursor:pointer;}
-.suggest-item:hover{background:var(--main-purple);}
-.btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:500;transition:0.2s;}
-.btn-add{background:var(--btn-primary);color:#fff;margin-bottom:14px;}
-.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:100;}
-.modal{width:94%;max-width:720px;max-height:90vh;overflow-y:auto;background:#fff;border-radius:14px;padding:16px;}
-.collapse-header{padding:12px;border-radius:10px;margin-bottom:8px;cursor:pointer;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
-.collapse-single{background:var(--card-single);}
-.collapse-multi{background:var(--card-multi);}
-.collapse-exchange{background:var(--card-exchange);}
-.upload-box{width:64px;height:64px;border:2px dashed var(--border-color);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-secondary);cursor:pointer;position:relative;}
-.upload-box input{position:absolute;inset:0;opacity:0;cursor:pointer;}
-.img-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-.img-preview img{width:64px;height:64px;object-fit:cover;border-radius:6px;}
-.record-item{padding:12px;border-radius:10px;background:#fff;margin-bottom:10px;border:1px solid var(--border-color);cursor:pointer;}
-.record-item:hover{background:#f8f6fc;}
-.finance-filter{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
-@media(max-width:640px){
-  .row-3,.row-4,.stat-row{grid-template-columns:1fr;}
+.suggest-item:hover{background:#f2f0fa;}
+.photo-area{margin:10px 0;}
+.camera-upload-box{
+  width:80px;
+  height:80px;
+  border:1.5px dashed #b8aed8;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  font-size:28px;
+  color:#7b68a8;
+  background:#f9f7ff;
+  flex-shrink:0;
+}
+.camera-upload-box input{ display:none; }
+.photo-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+.photo-preview img{width:80px;height:80px;object-fit:cover;border-radius:6px;}
+.item-card{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;}
+.item-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.item-actions button{padding:6px 8px;font-size:13px;margin-left:4px;}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;}
+th,td{border:1px solid #eee;padding:8px;text-align:left;}
+th{background:var(--main-purple);}
+.sub-title{font-weight:bold;color:#7b68a8;margin:12px 0 6px 0;font-size:15px;}
+@media(max-width:600px){
+  .stat-row{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr !important;}
+}
+.multi-group-wrap{
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:10px;
+}
+.multi-item-row{
+  display:grid;
+  grid-template-columns:1.2fr 2fr 0.8fr 0.8fr;
+  gap:8px;
+  margin-bottom:8px;
+  align-items:end;
+}
+.btn-add-row{
+  opacity:0.7;
+  background:#947fc7;
+  color:#fff;
+  margin-top:6px;
+}
+.btn-del-row{
+  background:#e57373;
+  color:white;
+  padding:7px;
 }
 </style>
 </head>
 <body>
-<div id="app" class="container"></div>
-<script>
-const { createApp, ref, reactive, computed, watch, onMounted, nextTick } = Vue;
-const { createPinia, defineStore } = Pinia;
-const { createRouter, createWebHashHistory } = VueRouter;
+<div class="container">
+<h1>代購記帳</h1>
+<div class="stat-row">
+  <div class="stat-card">本月總支出¥ <span id="sumCny">0.00</span></div>
+  <div class="stat-card">本月總支出$ <span id="sumTwd">0</span></div>
+</div>
+<div class="search-bar">
+  <label>關鍵字搜尋</label>
+  <input type="text" id="searchInput" placeholder="商品、人劇綜、訂購帳號、備註..." oninput="doSearch()">
+  <button onclick="clearSearch()">清除搜尋</button>
+</div>
 
-// ========== 資料遷移轉換函數（舊格式自動轉新products結構） ==========
-function convertOldRecord(old){
-  if(!old) return null;
-  const newRec = {
-    id: old.id || crypto.randomUUID(),
-    recordType: "single",
-    orderAccount: old.orderAccount || "",
-    orderDate: old.date || "",
-    dramaTag: old.tag || "",
-    productName: old.name || "",
-    style: old.style || "",
-    qty: Number(old.qty || 1),
-    originalCNY: Number(old.originalCNY || 0),
-    realPayCNY: Number(old.realCNY || 0),
-    realPayTWD: Number(old.realTWD || 0),
-    payMethod: old.payMethod || "",
-    cardFeeTWD: Number(old.cardFeeTWD || 0),
-    rate: Number(old.rate || 0),
-    profitTWD: Number(old.profitTWD || 0),
-    receiveTWD: Number(old.receiveTWD || 0),
-    receiveSource: old.receiveSource || "",
-    last5Code: old.last5Code || "",
-    receiveDate: old.receiveDate || "",
-    platform: old.platform || "",
-    shopName: old.shopName || "",
-    imgs: Array.isArray(old.imgs) ? old.imgs : [],
-    remark: old.remark || "",
-    tradeDate: "",
-    payCNY: 0,
-    payTWD: 0,
-    exchangeFeeTWD:0,
-    targetUser:"",
-    purpose:""
-  }
-  return newRec;
+<!-- 單品項 -->
+<div class="single-collapse">
+  <div class="single-collapse-header" id="header-single" onclick="toggleBlock('single')">
+    <span>新增帳務｜單品項</span>
+    <span id="arrow-single">▼</span>
+  </div>
+  <div class="single-collapse-content" id="panel-single">
+    <div id="formSingle" class="form-wrap active">
+      <input type="hidden" id="editIdSingle">
+      <div class="form-row row-2col">
+        <div class="auto-suggest">
+          <label>訂購帳號</label>
+          <input type="text" id="orderNoSingle" oninput="showSuggest('orderNo', this.value)">
+          <div class="suggest-list" id="suggest-orderNo"></div>
+        </div>
+        <div>
+          <label>訂購日期</label>
+          <input type="date" id="orderDateSingle">
+        </div>
+      </div>
+      <div class="form-row row-4col">
+        <div class="auto-suggest">
+          <label>人劇綜</label>
+          <input type="text" id="artistSingle" oninput="showSuggest('artist', this.value)">
+          <div class="suggest-list" id="suggest-artist"></div>
+        </div>
+        <div>
+          <label>商品名稱</label>
+          <input type="text" id="prodNameSingle">
+        </div>
+        <div>
+          <label>款式</label>
+          <input type="text" id="styleSingle">
+        </div>
+        <div>
+          <label>數量</label>
+          <input type="number" id="qtySingle" min="0" step="1">
+        </div>
+      </div>
+      <div class="form-row row-3col">
+        <div>
+          <label>原金額¥</label>
+          <input type="number" id="oriCnySingle" step="0.01" inputmode="decimal">
+        </div>
+        <div>
+          <label>實付金額¥</label>
+          <input type="number" id="payCnySingle" step="0.01" inputmode="decimal" oninput="calcSingle()">
+        </div>
+        <div>
+          <label>實付金額$</label>
+          <input type="number" id="payTwdSingle" step="0.01" inputmode="decimal" oninput="calcSingle()">
+        </div>
+      </div>
+      <div class="form-row row-3col">
+        <div>
+          <label>預計刷卡手續費$</label>
+          <input type="number" id="feeTwdSingle" readonly>
+        </div>
+        <div>
+          <label>匯率</label>
+          <input type="number" id="rateSingle" readonly step="0.01">
+        </div>
+        <div>
+          <label>實際利潤$</label>
+          <input type="number" id="profitTwdSingle" readonly>
+        </div>
+      </div>
+      <div class="sub-title">客人入帳</div>
+      <div class="form-row row-4short">
+        <div>
+          <label>實收金額$</label>
+          <input type="number" id="recvTwdSingle" step="0.01" inputmode="decimal" oninput="calcSingle()">
+        </div>
+        <div>
+          <label>收款來源</label>
+          <select id="recvSourceSingle" onchange="otherSelect(this,'recvSource')"></select>
+        </div>
+        <div>
+          <label>末五碼</label>
+          <input type="text" id="last5Single">
+        </div>
+        <div>
+          <label>收款日期</label>
+          <input type="date" id="recvDateSingle">
+        </div>
+      </div>
+      <div class="form-row row-2col">
+        <div>
+          <label>下單平台</label>
+          <select id="platformSingle" onchange="otherSelect(this,'platform')"></select>
+        </div>
+        <div class="auto-suggest">
+          <label>店面名稱</label>
+          <input type="text" id="shopNameSingle" oninput="showSuggest('shopName', this.value)">
+          <div class="suggest-list" id="suggest-shopName"></div>
+        </div>
+      </div>
+      <div class="photo-area">
+        <label>照片</label>
+        <div class="photo-preview" id="photoPreviewSingle">
+          <label class="camera-upload-box"> 📷 <input type="file" id="photoInputSingle" accept="image/*" multiple onchange="uploadPhoto('single')"> </label>
+        </div>
+        <input type="hidden" id="photoArrSingle">
+      </div>
+      <div>
+        <label>備註</label>
+        <input type="text" id="remarkSingle">
+      </div>
+      <div class="btn-group" style="margin-top:12px;">
+        <button onclick="saveSingle()">儲存</button>
+        <button onclick="clearSingle()">清空</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 多品項 -->
+<div class="single-collapse">
+  <div class="single-collapse-header" id="header-multi" onclick="toggleBlock('multi')">
+    <span>新增帳務｜多品項</span>
+    <span id="arrow-multi">▼</span>
+  </div>
+  <div class="single-collapse-content" id="panel-multi">
+    <div id="formMulti" class="form-wrap active">
+      <input type="hidden" id="editIdMulti">
+      <div class="form-row row-2col">
+        <div class="auto-suggest">
+          <label>訂購帳號</label>
+          <input type="text" id="orderNoMulti" oninput="showSuggest('orderNo', this.value)">
+        </div>
+        <div>
+          <label>訂購日期</label>
+          <input type="date" id="orderDateMulti">
+        </div>
+      </div>
+      <div id="multiProductBlock" class="multi-group-wrap">
+        <label>商品清單</label>
+        <div id="multiRowsWrap"></div>
+        <button type="button" class="btn-add-row" onclick="addMultiRow()">+ 新增一組商品</button>
+      </div>
+      <div class="form-row row-3col">
+        <div>
+          <label>原金額¥</label>
+          <input type="number" id="oriCnyMulti" step="0.01" inputmode="decimal">
+        </div>
+        <div>
+          <label>實付金額¥</label>
+          <input type="number" id="payCnyMulti" step="0.01" inputmode="decimal" oninput="calcMulti()">
+        </div>
+        <div>
+          <label>實付金額$</label>
+          <input type="number" id="payTwdMulti" step="0.01" inputmode="decimal" oninput="calcMulti()">
+        </div>
+      </div>
+      <div class="form-row row-3col">
+        <div>
+          <label>預計刷卡手續費$</label>
+          <input type="number" id="feeTwdMulti" readonly>
+        </div>
+        <div>
+          <label>匯率</label>
+          <input type="number" id="rateMulti" readonly step="0.01">
+        </div>
+        <div>
+          <label>實際利潤$</label>
+          <input type="number" id="profitTwdMulti" readonly>
+        </div>
+      </div>
+      <div class="sub-title">客人入帳</div>
+      <div class="form-row row-4short">
+        <div>
+          <label>實收金額$</label>
+          <input type="number" id="recvTwdMulti" step="0.01" inputmode="decimal" oninput="calcMulti()">
+        </div>
+        <div>
+          <label>收款來源</label>
+          <select id="recvSourceMulti" onchange="otherSelect(this,'recvSource')"></select>
+        </div>
+        <div>
+          <label>末五碼</label>
+          <input type="text" id="last5Multi">
+        </div>
+        <div>
+          <label>收款日期</label>
+          <input type="date" id="recvDateMulti">
+        </div>
+      </div>
+      <div class="form-row row-2col">
+        <div>
+          <label>下單平台</label>
+          <select id="platformMulti" onchange="otherSelect(this,'platform')"></select>
+        </div>
+        <div class="auto-suggest">
+          <label>店面名稱</label>
+          <input type="text" id="shopNameMulti" oninput="showSuggest('shopName', this.value)">
+          <div class="suggest-list" id="suggest-shopName"></div>
+        </div>
+      </div>
+      <div class="photo-area">
+        <label>照片</label>
+        <div class="photo-preview" id="photoPreviewMulti">
+          <label class="camera-upload-box"> 📷 <input type="file" id="photoInputMulti" accept="image/*" multiple onchange="uploadPhoto('multi')"> </label>
+        </div>
+        <input type="hidden" id="photoArrMulti">
+      </div>
+      <div>
+        <label>備註</label>
+        <input type="text" id="remarkMulti">
+      </div>
+      <div class="btn-group" style="margin-top:12px;">
+        <button onclick="saveMulti()">儲存</button>
+        <button onclick="clearMulti()">清空</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 儲值換匯 -->
+<div class="single-collapse">
+  <div class="single-collapse-header" id="header-exch" onclick="toggleBlock('exch')">
+    <span>新增帳務｜儲值/換匯</span>
+    <span id="arrow-exch">▼</span>
+  </div>
+  <div class="single-collapse-content" id="panel-exch">
+    <div id="formExch" class="form-wrap active">
+      <input type="hidden" id="editIdExch">
+      <div class="form-row row-3col">
+        <div>
+          <label>交易日期</label>
+          <input type="date" id="exchDate">
+        </div>
+        <div>
+          <label>支付金額¥</label>
+          <input type="number" id="exchCny" step="0.01" inputmode="decimal" oninput="calcExch()">
+        </div>
+        <div>
+          <label>支付金額$</label>
+          <input type="number" id="exchTwd" step="0.01" inputmode="decimal" oninput="calcExch()">
+        </div>
+      </div>
+      <div class="form-row row-3col">
+        <div>
+          <label>刷卡手續$</label>
+          <input type="number" id="exchFee" readonly>
+        </div>
+        <div>
+          <label>匯率</label>
+          <input type="number" id="exchRate" readonly step="0.0001">
+        </div>
+        <div>
+          <label>對方</label>
+          <select id="exchTarget" onchange="otherSelect(this,'exchTarget')"></select>
+        </div>
+      </div>
+      <div class="form-row row-2col">
+        <div>
+          <label>用途</label>
+          <select id="exchPurpose" onchange="otherSelect(this,'exchPurpose')"></select>
+        </div>
+        <div></div>
+      </div>
+      <div class="btn-group" style="margin-top:12px;">
+        <button onclick="saveExch()">儲存</button>
+        <button onclick="clearExch()">清空</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="listWrap"></div>
+<div class="filter-bar">
+  <label>彙整區間</label>
+  <input type="date" id="startDate">
+  <input type="date" id="endDate">
+  <button onclick="renderAll()">全部資料</button>
+  <button onclick="renderRange()">區間彙整</button>
+</div>
+</div>
+
+<script>
+let blockState = { single: false, multi: false, exch: false };
+function toggleBlock(key){
+  blockState[key] = !blockState[key];
+  const panel = document.getElementById("panel-"+key);
+  const arrow = document.getElementById("arrow-"+key);
+  if(blockState[key]){ panel.classList.add("open"); arrow.textContent = "▲"; }
+  else{ panel.classList.remove("open"); arrow.textContent = "▼"; }
 }
 
-// ========== Pinia Store ==========
-const useRecordStore = defineStore('record',{
-  state:()=>({
-    rawList:[], // 原始未轉換資料（保留原始舊資料不覆蓋）
-    suggestion:{
-      orderAccount:[],
-      dramaTag:[],
-      shopName:[]
-    },
-    selectOpts:{
-      payMethod:["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"],
-      receiveSource:["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"],
-      platform:["淘寶","淘寶（騰訊）","淘寶（優酷）","淘寶（愛奇藝）","騰訊","優酷","愛奇藝","小芒","微店","微信（拼團呀）","微信（拼谷）","閑魚","小紅書","抖音","京東","QQ音樂","酷狗音樂","網易雲","拼多多","阿里巴巴","微博","紛玩島","大麥","百度網盤"],
-      targetUser:["解語花","友宜集運"],
-      purpose:["換匯","儲值集運"]
-    }
-  }),
-  getters:{
-    recordList(state){
-      return state.rawList.map(item=>{
-        if(!item.recordType) return convertOldRecord(item);
-        return item;
-      }).filter(Boolean)
-    },
-    monthCNY(state){
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = now.getMonth();
-      return this.recordList.filter(r=>{
-        const d = new Date(r.orderDate || r.tradeDate);
-        return d.getFullYear()===y && d.getMonth()===m
-      }).reduce((s,i)=>s + Number(i.realPayCNY||0),0)
-    },
-    monthTWD(state){
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = now.getMonth();
-      return this.recordList.filter(r=>{
-        const d = new Date(r.orderDate || r.tradeDate);
-        return d.getFullYear()===y && d.getMonth()===m
-      }).reduce((s,i)=>s + (Number(i.realPayTWD||0)+Number(i.cardFeeTWD||0)),0)
-    }
-  },
-  actions:{
-    load(){
-      const raw = localStorage.getItem("代购RecordRaw");
-      if(raw) this.rawList = JSON.parse(raw);
-      const sug = localStorage.getItem("suggestion");
-      if(sug) this.suggestion = JSON.parse(sug);
-      const opts = localStorage.getItem("selectOpts");
-      if(opts) this.selectOpts = JSON.parse(opts);
-    },
-    saveRaw(){
-      localStorage.setItem("代购RecordRaw",JSON.stringify(this.rawList));
-    },
-    saveSuggest(){
-      localStorage.setItem("suggestion",JSON.stringify(this.suggestion));
-    },
-    saveOpts(){
-      localStorage.setItem("selectOpts",JSON.stringify(this.selectOpts));
-    },
-    addSuggest(key,val){
-      if(!val) return;
-      if(!this.suggestion[key].includes(val)){
-        this.suggestion[key].push(val);
-        this.saveSuggest();
+const STORAGE_KEY = "代购BookData";
+const BASE_RECV_SOURCE = ["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"];
+const BASE_PLATFORM = ["淘寶","淘寶（騰訊）","淘寶（優酷）","淘寶（愛奇藝）","騰訊","優酷","愛奇藝","小芒","微店","微信（拼團呀）","微信（拼谷）","閑魚","小紅書","抖音","京東","QQ音樂","酷狗音樂","網易雲","拼多多","阿里巴巴","微博","紛玩島","大麥","百度網盤"];
+const BASE_EXCH_TARGET = ["解語花","友宜集運"];
+const BASE_EXCH_PURPOSE = ["換匯","儲值集運"];
+
+let data = {
+  products:[],
+  history:{
+    orderNo:[],
+    artist:[],
+    shopName:[],
+    recvSource:[...BASE_RECV_SOURCE],
+    platform:[...BASE_PLATFORM],
+    exchTarget:[...BASE_EXCH_TARGET],
+    exchPurpose:[...BASE_EXCH_PURPOSE]
+  }
+};
+let searchKeyword = "";
+let multiRows = [];
+let photoCache = { single:[], multi:[] };
+
+function loadData(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{
+      const old = JSON.parse(raw);
+      if(Array.isArray(old) && old.length>0 && !old.products){
+        data.products = old.map(item=>{
+          return {
+            type:"migrated",
+            orderDate:item.date||"",
+            orderNo:item.orderNo||"",
+            artist:item.artist||"",
+            prodName:item.name||"",
+            style:item.style||"",
+            qty:item.qty||1,
+            multiItems: null,
+            oriCny:item.oriCny||0,
+            payCny:item.cny||0,
+            payTwd:item.twd||0,
+            recvTwd:item.recvTwd||0,
+            last5:item.last5||"",
+            feeTwd:Math.round((item.twd||0)*0.015),
+            profitTwd: (item.recvTwd||0) - ((item.twd||0)+Math.round((item.twd||0)*0.015)),
+            rate: item.payCny>0 ? Number((item.twd/item.cny).toFixed(2)) : 0,
+            recvSource:item.recvSource||"",
+            recvDate:item.recvDate||"",
+            platform:item.platform||"",
+            shopName:item.shopName||"",
+            photos:item.photos||[],
+            remark:item.remark||""
+          }
+        })
+      }else if(old.products){
+        data = old;
       }
-    },
-    addOpt(key,val){
-      if(!val) return;
-      if(!this.selectOpts[key].includes(val)){
-        this.selectOpts[key].push(val);
-        this.saveOpts();
-      }
-    },
-    addRecord(rec){
-      this.rawList.push(rec);
-      this.saveRaw();
-      this.addSuggest("orderAccount",rec.orderAccount);
-      this.addSuggest("dramaTag",rec.dramaTag);
-      this.addSuggest("shopName",rec.shopName);
-      if(rec.payMethod) this.addOpt("payMethod",rec.payMethod);
-      if(rec.receiveSource) this.addOpt("receiveSource",rec.receiveSource);
-      if(rec.platform) this.addOpt("platform",rec.platform);
-      if(rec.targetUser) this.addOpt("targetUser",rec.targetUser);
-      if(rec.purpose) this.addOpt("purpose",rec.purpose);
-    },
-    updateRecord(id,newRec){
-      const idx = this.rawList.findIndex(i=>i.id===id);
-      if(idx>-1){
-        this.rawList[idx] = newRec;
-        this.saveRaw();
-        this.addSuggest("orderAccount",newRec.orderAccount);
-        this.addSuggest("dramaTag",newRec.dramaTag);
-        this.addSuggest("shopName",newRec.shopName);
-        if(newRec.payMethod) this.addOpt("payMethod",newRec.payMethod);
-        if(newRec.receiveSource) this.addOpt("receiveSource",newRec.receiveSource);
-        if(newRec.platform) this.addOpt("platform",newRec.platform);
-        if(newRec.targetUser) this.addOpt("targetUser",newRec.targetUser);
-        if(newRec.purpose) this.addOpt("purpose",newRec.purpose);
-      }
-    },
-    delRecord(id){
-      const idx = this.rawList.findIndex(i=>i.id===id);
-      if(idx>-1){
-        this.rawList.splice(idx,1);
-        this.saveRaw();
-      }
+    }catch(e){console.error(e);}
+  }
+  fillSelect("recvSourceSingle");
+  fillSelect("recvSourceMulti");
+  fillSelect("platformSingle");
+  fillSelect("platformMulti");
+  fillSelect("exchTarget");
+  fillSelect("exchPurpose");
+  renderAll();
+}
+function saveStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function fillSelect(id){
+  const sel = document.getElementById(id);
+  if(!sel) return;
+  let key;
+  if(id.includes("recvSource")) key="recvSource";
+  else if(id.includes("platform")) key="platform";
+  else if(id==="exchTarget") key="exchTarget";
+  else if(id==="exchPurpose") key="exchPurpose";
+  else return;
+  sel.innerHTML = "";
+  data.history[key].forEach(v=>{
+    const opt = document.createElement("option");opt.value=v;opt.innerText=v;sel.appendChild(opt);
+  })
+  const optOther = document.createElement("option");opt.value="_OTHER_";opt.innerText="其他";sel.appendChild(optOther);
+}
+function otherSelect(el, key){
+  if(el.value === "_OTHER_"){
+    const val = prompt("輸入新選項：");
+    if(val && val.trim()){
+      const v = val.trim();
+      if(!data.history[key].includes(v)) data.history[key].push(v);
+      fillSelect(el.id);
+      el.value = v;
+      saveStorage();
     }
   }
-})
+}
 
-// ========== 路由 ==========
-const routes = [
-  {path:'/expense',component:{
-    template:`
-      <div>
-        <div class="nav-bar">
-          <button class="nav-btn active">代購記帳</button>
-          <button class="nav-btn" @click="$router.push('/finance')">財務表</button>
-        </div>
-        <div class="stat-row">
-          <div class="stat-item">本月總支出 ¥：{{ store.monthCNY.toFixed(2) }}</div>
-          <div class="stat-item">本月總支出 $：{{ store.monthTWD.toFixed(2) }}</div>
-        </div>
-        <button class="btn btn-add" @click="openModal()">新增帳務</button>
-        <div v-for="r in store.recordList" :key="r.id" class="record-item" @click="editRec(r)">
-          <div>{{r.orderAccount || r.tradeDate}}｜{{r.recordType==='single'?'單品項':r.recordType==='multi'?'多品項':'儲值/換匯'}}｜{{r.productName||r.purpose||''}}</div>
-          <div style="font-size:0.9rem;color:#666">¥{{r.realPayCNY}} | ${{r.realPayTWD}} 手續${{r.cardFeeTWD}}</div>
-        </div>
-        <div v-if="modalShow" class="modal-mask" @click.self="modalShow=false">
-          <div class="modal">
-            <div class="collapse-header collapse-single" @click="tabSingle=!tabSingle">帳務｜單品項 <span>{{tabSingle?'−':'+'}}</span></div>
-            <div v-if="tabSingle">
-              <div class="row row-2">
-                <div class="autocomplete-wrap">
-                  <label>訂購帳號</label>
-                  <input v-model="formSingle.orderAccount" @input="filterSug('orderAccount','single')" @blur="hideSug" />
-                  <div class="suggest-list" v-if="sugShow.orderAccount && sugList.orderAccount.length">
-                    <div class="suggest-item" v-for="s in sugList.orderAccount" @click="pickSug('orderAccount','single',s)">{{s}}</div>
-                  </div>
-                </div>
-                <div>
-                  <label>訂購日期</label>
-                  <input v-model="formSingle.orderDate" type="date"/>
-                </div>
-              </div>
-              <div class="row row-3">
-                <div class="autocomplete-wrap">
-                  <label>人劇綜</label>
-                  <input v-model="formSingle.dramaTag" @input="filterSug('dramaTag','single')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.dramaTag && sugList.dramaTag.length">
-                    <div class="suggest-item" v-for="s in sugList.dramaTag" @click="pickSug('dramaTag','single',s)">{{s}}</div>
-                  </div>
-                </div>
-                <div><label>商品名稱</label><input v-model="formSingle.productName"/></div>
-                <div><label>款式</label><input v-model="formSingle.style"/></div>
-                <div><label>數量</label><input v-model.number="formSingle.qty" type="number" inputmode="decimal"/></div>
-              </div>
-              <div class="sub-title">費用輸入</div>
-              <div class="row row-4">
-                <div><label>原金額 ¥</label><input v-model.number="formSingle.originalCNY" type="number" inputmode="decimal"/></div>
-                <div><label>實付金額 ¥</label><input v-model.number="formSingle.realPayCNY" type="number" inputmode="decimal" @input="calcSingle"/></div>
-                <div><label>實付金額 $</label><input v-model.number="formSingle.realPayTWD" type="number" inputmode="decimal" @input="calcSingle"/></div>
-              </div>
-              <div class="row row-4">
-                <div>
-                  <label>付款方式</label>
-                  <select v-model="formSingle.payMethod" @change="handleSel('payMethod','single')">
-                    <option v-for="o in store.selectOpts.payMethod" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formSingle.payMethod==='__other__'" v-model="formSingle.payMethodOther" placeholder="輸入新付款方式"/>
-                </div>
-                <div><label>預計刷卡手續費 $</label><input v-model.number="formSingle.cardFeeTWD" readonly/></div>
-                <div><label>匯率</label><input v-model.number="formSingle.rate" readonly/></div>
-                <div><label>實際利潤 $</label><input v-model.number="formSingle.profitTWD" readonly/></div>
-              </div>
-              <div class="sub-title">客戶入帳資料</div>
-              <div class="row row-4">
-                <div><label>實收金額 $</label><input v-model.number="formSingle.receiveTWD" type="number" inputmode="decimal" @input="calcSingle"/></div>
-                <div>
-                  <label>收款來源</label>
-                  <select v-model="formSingle.receiveSource" @change="handleSel('receiveSource','single')">
-                    <option v-for="o in store.selectOpts.receiveSource" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formSingle.receiveSource==='__other__'" v-model="formSingle.receiveSourceOther" placeholder="輸入新收款來源"/>
-                </div>
-                <div><label>末五碼</label><input v-model="formSingle.last5Code"/></div>
-                <div><label>收款日期</label><input v-model="formSingle.receiveDate" type="date"/></div>
-              </div>
-              <div class="row row-2">
-                <div>
-                  <label>下單平台</label>
-                  <select v-model="formSingle.platform" @change="handleSel('platform','single')">
-                    <option v-for="o in store.selectOpts.platform" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formSingle.platform==='__other__'" v-model="formSingle.platformOther" placeholder="輸入新平台"/>
-                </div>
-                <div class="autocomplete-wrap">
-                  <label>店面名稱</label>
-                  <input v-model="formSingle.shopName" @input="filterSug('shopName','single')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.shopName && sugList.shopName.length">
-                    <div class="suggest-item" v-for="s in sugList.shopName" @click="pickSug('shopName','single',s)">{{s}}</div>
-                  </div>
-                </div>
-              </div>
-              <div class="form-title">照片</div>
-              <div class="upload-box">📷
-                <input type="file" multiple accept="image/*" @change="uploadImg($event,'single')"/>
-              </div>
-              <div class="img-preview">
-                <img v-for="(i,idx) in formSingle.imgs" :key="idx" :src="i" @click="previewImg(i)" style="cursor:pointer"/>
-              </div>
-              <div class="form-title">備註</div>
-              <input v-model="formSingle.remark"/>
-              <div style="margin-top:14px;display:flex;gap:8px;">
-                <button class="btn btn-add" @click="saveSingle">儲存</button>
-                <button class="btn" style="background:#ccc" @click="modalShow=false">取消</button>
-              </div>
-            </div>
-            <div class="collapse-header collapse-multi" @click="tabMulti=!tabMulti">帳務｜多品項 <span>{{tabMulti?'−':'+'}}</span></div>
-            <div v-if="tabMulti">
-              <div class="row row-2">
-                <div class="autocomplete-wrap">
-                  <label>訂購帳號</label>
-                  <input v-model="formMulti.orderAccount" @input="filterSug('orderAccount','multi')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.orderAccount && sugList.orderAccount.length">
-                    <div class="suggest-item" v-for="s in sugList.orderAccount" @click="pickSug('orderAccount','multi',s)">{{s}}</div>
-                  </div>
-                </div>
-                <div><label>訂購日期</label><input v-model="formMulti.orderDate" type="date"/></div>
-              </div>
-              <div class="row row-3">
-                <div class="autocomplete-wrap">
-                  <label>人劇綜</label>
-                  <input v-model="formMulti.dramaTag" @input="filterSug('dramaTag','multi')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.dramaTag && sugList.dramaTag.length">
-                    <div class="suggest-item" v-for="s in sugList.dramaTag" @click="pickSug('dramaTag','multi',s)">{{s}}</div>
-                  </div>
-                </div>
-                <div><label>商品名稱</label><input v-model="formMulti.productName"/></div>
-                <div><label>款式</label><input v-model="formMulti.style"/></div>
-                <div><label>數量</label><input v-model.number="formMulti.qty" type="number" inputmode="decimal"/></div>
-              </div>
-              <div class="sub-title">費用輸入</div>
-              <div class="row row-4">
-                <div><label>原金額 ¥</label><input v-model.number="formMulti.originalCNY" type="number" inputmode="decimal"/></div>
-                <div><label>實付金額 ¥</label><input v-model.number="formMulti.realPayCNY" type="number" inputmode="decimal" @input="calcMulti"/></div>
-                <div><label>實付金額 $</label><input v-model.number="formMulti.realPayTWD" type="number" inputmode="decimal" @input="calcMulti"/></div>
-              </div>
-              <div class="row row-4">
-                <div>
-                  <label>付款方式</label>
-                  <select v-model="formMulti.payMethod" @change="handleSel('payMethod','multi')">
-                    <option v-for="o in store.selectOpts.payMethod" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formMulti.payMethod==='__other__'" v-model="formMulti.payMethodOther" placeholder="輸入新付款方式"/>
-                </div>
-                <div><label>預計刷卡手續費 $</label><input v-model.number="formMulti.cardFeeTWD" readonly/></div>
-                <div><label>匯率</label><input v-model.number="formMulti.rate" readonly/></div>
-                <div><label>實際利潤 $</label><input v-model.number="formMulti.profitTWD" readonly/></div>
-              </div>
-              <div class="sub-title">客戶入帳資料</div>
-              <div class="row row-4">
-                <div><label>實收金額 $</label><input v-model.number="formMulti.receiveTWD" type="number" inputmode="decimal" @input="calcMulti"/></div>
-                <div>
-                  <label>收款來源</label>
-                  <select v-model="formMulti.receiveSource" @change="handleSel('receiveSource','multi')">
-                    <option v-for="o in store.selectOpts.receiveSource" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formMulti.receiveSource==='__other__'" v-model="formMulti.receiveSourceOther" placeholder="輸入新收款來源"/>
-                </div>
-                <div><label>末五碼</label><input v-model="formMulti.last5Code"/></div>
-                <div><label>收款日期</label><input v-model="formMulti.receiveDate" type="date"/></div>
-              </div>
-              <div class="row row-2">
-                <div>
-                  <label>下單平台</label>
-                  <select v-model="formMulti.platform" @change="handleSel('platform','multi')">
-                    <option v-for="o in store.selectOpts.platform" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formMulti.platform==='__other__'" v-model="formMulti.platformOther" placeholder="輸入新平台"/>
-                </div>
-                <div class="autocomplete-wrap">
-                  <label>店面名稱</label>
-                  <input v-model="formMulti.shopName" @input="filterSug('shopName','multi')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.shopName && sugList.shopName.length">
-                    <div class="suggest-item" v-for="s in sugList.shopName" @click="pickSug('shopName','multi',s)">{{s}}</div>
-                  </div>
-                </div>
-              </div>
-              <div class="form-title">照片</div>
-              <div class="upload-box">📷
-                <input type="file" multiple accept="image/*" @change="uploadImg($event,'multi')"/>
-              </div>
-              <div class="img-preview">
-                <img v-for="(i,idx) in formMulti.imgs" :key="idx" :src="i" @click="previewImg(i)" style="cursor:pointer"/>
-              </div>
-              <div class="form-title">備註</div>
-              <input v-model="formMulti.remark"/>
-              <div style="margin-top:14px;display:flex;gap:8px;">
-                <button class="btn btn-add" @click="saveMulti">儲存</button>
-                <button class="btn" style="background:#ccc" @click="modalShow=false">取消</button>
-              </div>
-            </div>
-            <div class="collapse-header collapse-exchange" @click="tabExchange=!tabExchange">帳務｜儲值/換匯 <span>{{tabExchange?'−':'+'}}</span></div>
-            <div v-if="tabExchange">
-              <div class="row row-2">
-                <div><label>交易日期</label><input v-model="formEx.tradeDate" type="date"/></div>
-                <div></div>
-              </div>
-              <div class="row row-3">
-                <div><label>支付金額 ¥</label><input v-model.number="formEx.payCNY" type="number" inputmode="decimal" @input="calcEx"/></div>
-                <div><label>支付金額 $</label><input v-model.number="formEx.payTWD" type="number" inputmode="decimal" @input="calcEx"/></div>
-              </div>
-              <div class="row row-3">
-                <div><label>刷卡手續 $</label><input v-model.number="formEx.exchangeFeeTWD" readonly/></div>
-                <div><label>匯率</label><input v-model.number="formEx.rate" readonly/></div>
-              </div>
-              <div class="row row-2">
-                <div>
-                  <label>對方</label>
-                  <select v-model="formEx.targetUser" @change="handleSel('targetUser','ex')">
-                    <option v-for="o in store.selectOpts.targetUser" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formEx.targetUser==='__other__'" v-model="formEx.targetUserOther" placeholder="輸入新對方"/>
-                </div>
-                <div>
-                  <label>用途</label>
-                  <select v-model="formEx.purpose" @change="handleSel('purpose','ex')">
-                    <option v-for="o in store.selectOpts.purpose" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formEx.purpose==='__other__'" v-model="formEx.purposeOther" placeholder="輸入新用途"/>
-                </div>
-              </div>
-              <div style="margin-top:14px;display:flex;gap:8px;">
-                <button class="btn btn-add" @click="saveEx">儲存</button>
-                <button class="btn" style="background:#ccc" @click="modalShow=false">取消</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `,
-    setup(){
-      const store = useRecordStore();
-      const modalShow = ref(false);
-      const tabSingle = ref(true);
-      const tabMulti = ref(false);
-      const tabExchange = ref(false);
-      const editId = ref("");
-      const sugShow = reactive({orderAccount:false,dramaTag:false,shopName:false});
-      const sugList = reactive({orderAccount:[],dramaTag:[],shopName:[]});
-      const today = new Date().toISOString().split('T')[0];
-      const formSingle = reactive({
-        id:"",recordType:"single",orderAccount:"",orderDate:today,dramaTag:"",productName:"",style:"",qty:1,
-        originalCNY:0,realPayCNY:0,realPayTWD:0,payMethod:"",payMethodOther:"",cardFeeTWD:0,rate:0,profitTWD:0,
-        receiveTWD:0,receiveSource:"",receiveSourceOther:"",last5Code:"",receiveDate:today,platform:"",platformOther:"",
-        shopName:"",imgs:[],remark:""
-      })
-      const formMulti = reactive({
-        id:"",recordType:"multi",orderAccount:"",orderDate:today,dramaTag:"",productName:"",style:"",qty:1,
-        originalCNY:0,realPayCNY:0,realPayTWD:0,payMethod:"",payMethodOther:"",cardFeeTWD:0,rate:0,profitTWD:0,
-        receiveTWD:0,receiveSource:"",receiveSourceOther:"",last5Code:"",receiveDate:today,platform:"",platformOther:"",
-        shopName:"",imgs:[],remark:""
-      })
-      const formEx = reactive({
-        id:"",recordType:"exchange",tradeDate:today,payCNY:0,payTWD:0,exchangeFeeTWD:0,rate:0,targetUser:"",targetUserOther:"",purpose:"",purposeOther:""
-      })
-      function openModal(){
-        editId.value="";
-        resetForm();
-        modalShow.value=true;
-      }
-      function resetForm(){
-        const t = new Date().toISOString().split('T')[0];
-        Object.assign(formSingle,{id:"",recordType:"single",orderAccount:"",orderDate:t,dramaTag:"",productName:"",style:"",qty:1,
-          originalCNY:0,realPayCNY:0,realPayTWD:0,payMethod:"",payMethodOther:"",cardFeeTWD:0,rate:0,profitTWD:0,
-          receiveTWD:0,receiveSource:"",receiveSourceOther:"",last5Code:"",receiveDate:t,platform:"",platformOther:"",shopName:"",imgs:[],remark:""})
-        Object.assign(formMulti,{id:"",recordType:"multi",orderAccount:"",orderDate:t,dramaTag:"",productName:"",style:"",qty:1,
-          originalCNY:0,realPayCNY:0,realPayTWD:0,payMethod:"",payMethodOther:"",cardFeeTWD:0,rate:0,profitTWD:0,
-          receiveTWD:0,receiveSource:"",receiveSourceOther:"",last5Code:"",receiveDate:t,platform:"",platformOther:"",shopName:"",imgs:[],remark:""})
-        Object.assign(formEx,{id:"",recordType:"exchange",tradeDate:t,payCNY:0,payTWD:0,exchangeFeeTWD:0,rate:0,targetUser:"",targetUserOther:"",purpose:"",purposeOther:""})
-      }
-      function editRec(r){
-        editId.value=r.id;
-        if(r.recordType==='single'){
-          Object.assign(formSingle,JSON.parse(JSON.stringify(r)));
-          tabSingle.value=true;tabMulti.value=false;tabExchange.value=false;
-        }else if(r.recordType==='multi'){
-          Object.assign(formMulti,JSON.parse(JSON.stringify(r)));
-          tabSingle.value=false;tabMulti.value=true;tabExchange.value=false;
-        }else{
-          Object.assign(formEx,JSON.parse(JSON.stringify(r)));
-          tabSingle.value=false;tabMulti.value=false;tabExchange.value=true;
-        }
-        modalShow.value=true;
-      }
-      function calcSingle(){
-        const ft = Number(formSingle.realPayTWD||0);
-        const fy = Number(formSingle.realPayCNY||0);
-        const rt = Number(formSingle.receiveTWD||0);
-        formSingle.cardFeeTWD = Math.round(ft*0.015);
-        formSingle.rate = fy===0 ? 0 : ft/fy;
-        formSingle.profitTWD = rt - (ft + formSingle.cardFeeTWD);
-      }
-      function calcMulti(){
-        const ft = Number(formMulti.realPayTWD||0);
-        const fy = Number(formMulti.realPayCNY||0);
-        const rt = Number(formMulti.receiveTWD||0);
-        formMulti.cardFeeTWD = Math.round(ft*0.015);
-        formMulti.rate = fy===0 ? 0 : ft/fy;
-        formMulti.profitTWD = rt - (ft + formMulti.cardFeeTWD);
-      }
-      function calcEx(){
-        const pt = Number(formEx.payTWD||0);
-        const py = Number(formEx.payCNY||0);
-        formEx.exchangeFeeTWD = Math.round(pt*0.015);
-        formEx.rate = py===0 ? 0 : pt/py;
-      }
-      function handleSel(key,type){
-        let f = type==='single'?formSingle:type==='multi'?formMulti:formEx;
-        if(f[key]==='__other__'){
-          f[key] = f[key+"Other"] || "";
-        }else{
-          f[key+"Other"] = "";
-        }
-      }
-      function filterSug(key,type){
-        const f = type==='single'?formSingle:type==='multi'?formMulti:formEx;
-        const kw = f[key].toLowerCase();
-        sugList[key] = store.suggestion[key].filter(x=>x.toLowerCase().includes(kw));
-        sugShow[key]=true;
-      }
-      function hideSug(){setTimeout(()=>{sugShow.orderAccount=false;sugShow.dramaTag=false;sugShow.shopName=false},200)}
-      function pickSug(key,type,val){
-        const f = type==='single'?formSingle:type==='multi'?formMulti:formEx;
-        f[key]=val;sugShow[key]=false;
-      }
-      function uploadImg(e,type){
-        const files = e.target.files;
-        const fr = new FileReader();
-        for(let f of files){
-          const reader = new FileReader();
-          reader.onload = ev=>{
-            if(type==='single') formSingle.imgs.push(ev.target.result);
-            if(type==='multi') formMulti.imgs.push(ev.target.result);
-          }
-          reader.readAsDataURL(f);
-        }
-      }
-      function previewImg(src){window.open(src)}
-      function saveSingle(){
-        const rec = JSON.parse(JSON.stringify(formSingle));
-        if(rec.payMethod==='__other__') rec.payMethod = rec.payMethodOther;
-        if(rec.receiveSource==='__other__') rec.receiveSource = rec.receiveSourceOther;
-        if(rec.platform==='__other__') rec.platform = rec.platformOther;
-        if(editId.value){
-          rec.id=editId.value;store.updateRecord(editId.value,rec);
-        }else{
-          rec.id = crypto.randomUUID();store.addRecord(rec);
-        }
-        modalShow.value=false;
-      }
-      function saveMulti(){
-        const rec = JSON.parse(JSON.stringify(formMulti));
-        if(rec.payMethod==='__other__') rec.payMethod = rec.payMethodOther;
-        if(rec.receiveSource==='__other__') rec.receiveSource = rec.receiveSourceOther;
-        if(rec.platform==='__other__') rec.platform = rec.platformOther;
-        if(editId.value){
-          rec.id=editId.value;store.updateRecord(editId.value,rec);
-        }else{
-          rec.id = crypto.randomUUID();store.addRecord(rec);
-        }
-        modalShow.value=false;
-      }
-      function saveEx(){
-        const rec = JSON.parse(JSON.stringify(formEx));
-        if(rec.targetUser==='__other__') rec.targetUser = rec.targetUserOther;
-        if(rec.purpose==='__other__') rec.purpose = rec.purposeOther;
-        if(editId.value){
-          rec.id=editId.value;store.updateRecord(editId.value,rec);
-        }else{
-          rec.id = crypto.randomUUID();store.addRecord(rec);
-        }
-        modalShow.value=false;
-      }
-      onMounted(()=>store.load())
-      return {store,modalShow,tabSingle,tabMulti,tabExchange,formSingle,formMulti,formEx,openModal,editRec,calcSingle,calcMulti,calcEx,handleSel,filterSug,sugList,sugShow,pickSug,hideSug,uploadImg,previewImg,saveSingle,saveMulti,saveEx}
+function showSuggest(key, val){
+  const wrap = document.getElementById("suggest-"+key);
+  wrap.innerHTML="";
+  if(!val.trim()){wrap.style.display="none";return;}
+  const list = data.history[key]||[];
+  const match = list.filter(x=>x.toLowerCase().includes(val.toLowerCase()));
+  if(match.length===0){wrap.style.display="none";return;}
+  match.forEach(t=>{
+    const div = document.createElement("div");div.className="suggest-item";div.innerText=t;
+    div.onclick=()=>{document.getElementById(key).value=t;wrap.style.display="none";};
+    wrap.appendChild(div);
+  })
+  wrap.style.display="block";
+}
+function pushHistory(key, val){
+  if(!val||!val.trim()) return;
+  const v = val.trim();
+  if(!data.history[key]) data.history[key]=[];
+  if(!data.history[key].includes(v)) data.history[key].push(v);
+}
+
+// ========== 【更新公式】手續費 = 實付金額$ *0.015 四捨五入整數 ==========
+function calcSingle(){
+  const payTwd = Number(document.getElementById("payTwdSingle").value||0);
+  const payCny = Number(document.getElementById("payCnySingle").value||0);
+  const recvTwd = Number(document.getElementById("recvTwdSingle").value||0);
+  const fee = Math.round(payTwd * 0.015);
+  const rate = payCny > 0 ? Number((payTwd / payCny).toFixed(2)) : 0;
+  const profit = recvTwd - (payTwd + fee);
+  document.getElementById("feeTwdSingle").value = fee;
+  document.getElementById("rateSingle").value = rate;
+  document.getElementById("profitTwdSingle").value = profit;
+}
+function calcMulti(){
+  const payTwd = Number(document.getElementById("payTwdMulti").value||0);
+  const payCny = Number(document.getElementById("payCnyMulti").value||0);
+  const recvTwd = Number(document.getElementById("recvTwdMulti").value||0);
+  const fee = Math.round(payTwd * 0.015);
+  const rate = payCny > 0 ? Number((payTwd / payCny).toFixed(2)) : 0;
+  const profit = recvTwd - (payTwd + fee);
+  document.getElementById("feeTwdMulti").value = fee;
+  document.getElementById("rateMulti").value = rate;
+  document.getElementById("profitTwdMulti").value = profit;
+}
+function calcExch(){
+  const exchTwd = Number(document.getElementById("exchTwd").value||0);
+  const exchCny = Number(document.getElementById("exchCny").value||0);
+  const fee = Math.round(exchTwd * 0.015);
+  const rate = exchCny>0 ? (exchTwd / exchCny).toFixed(4) : "";
+  document.getElementById("exchFee").value = fee;
+  document.getElementById("exchRate").value = rate;
+}
+
+function renderMultiRows(){
+  const wrap = document.getElementById("multiRowsWrap");
+  wrap.innerHTML = "";
+  multiRows.forEach((rowData, idx)=>{
+    const div = document.createElement("div");
+    div.className = "multi-item-row";
+    div.innerHTML = `
+      <input type="text" placeholder="人劇綜" value="${rowData.artist||''}" onchange="updateMultiRow(${idx},'artist',this.value)">
+      <input type="text" placeholder="商品名稱" value="${rowData.name||''}" onchange="updateMultiRow(${idx},'name',this.value)">
+      <input type="text" placeholder="款式" value="${rowData.style||''}" onchange="updateMultiRow(${idx},'style',this.value)">
+      <input type="number" min="0" step="1" placeholder="數量" value="${rowData.qty||''}" onchange="updateMultiRow(${idx},'qty',Number(this.value))">
+      <button class="btn-del-row" onclick="delMultiRow(${idx})">刪</button>
+    `;
+    wrap.appendChild(div);
+  })
+}
+function addMultiRow(){ multiRows.push({artist:"", name:"", style:"", qty:""}); renderMultiRows(); }
+function updateMultiRow(idx, key, val){ multiRows[idx][key] = val; }
+function delMultiRow(idx){ multiRows.splice(idx,1); renderMultiRows(); }
+
+function uploadPhoto(type){
+  const inputEl = document.getElementById("photoInput"+type.charAt(0).toUpperCase()+type.slice(1));
+  const previewWrap = document.getElementById("photoPreview"+type.charAt(0).toUpperCase()+type.slice(1));
+  const files = inputEl.files;
+  for(let f of files){
+    const r = new FileReader();
+    r.onload = e=>{ photoCache[type].push(e.target.result); renderPhotoPreview(type); }
+    r.readAsDataURL(f);
+  }
+}
+function renderPhotoPreview(type){
+  const previewWrap = document.getElementById("photoPreview"+type.charAt(0).toUpperCase()+type.slice(1));
+  previewWrap.innerHTML = `
+    <label class="camera-upload-box"> 📷 <input type="file" id="photoInput${type.charAt(0).toUpperCase()+type.slice(1)}" accept="image/*" multiple onchange="uploadPhoto('${type}')"> </label>
+  `;
+  photoCache[type].forEach((src,i)=>{
+    const img = document.createElement("img");img.src=src;
+    img.onclick=()=>{ photoCache[type].splice(i,1); renderPhotoPreview(type); }
+    previewWrap.appendChild(img);
+  })
+}
+
+function saveSingle(){
+  const obj = {
+    type: "normal",
+    orderDate:document.getElementById("orderDateSingle").value,
+    orderNo:document.getElementById("orderNoSingle").value,
+    artist: document.getElementById("artistSingle").value,
+    prodName: document.getElementById("prodNameSingle").value,
+    style: document.getElementById("styleSingle").value,
+    qty: Number(document.getElementById("qtySingle").value||0),
+    multiItems: null,
+    oriCny:Number(document.getElementById("oriCnySingle").value||0),
+    payCny:Number(document.getElementById("payCnySingle").value||0),
+    payTwd:Number(document.getElementById("payTwdSingle").value||0),
+    feeTwd:Number(document.getElementById("feeTwdSingle").value||0),
+    profitTwd:Number(document.getElementById("profitTwdSingle").value||0),
+    rate:Number(document.getElementById("rateSingle").value||0),
+    recvTwd:Number(document.getElementById("recvTwdSingle").value||0),
+    last5:document.getElementById("last5Single").value,
+    recvSource:document.getElementById("recvSourceSingle").value,
+    recvDate:document.getElementById("recvDateSingle").value,
+    platform:document.getElementById("platformSingle").value,
+    shopName:document.getElementById("shopNameSingle").value,
+    photos:photoCache["single"],
+    remark:document.getElementById("remarkSingle").value
+  }
+  pushHistory("orderNo", obj.orderNo);
+  pushHistory("artist", obj.artist);
+  pushHistory("shopName", obj.shopName);
+  pushHistory("recvSource", obj.recvSource);
+  pushHistory("platform", obj.platform);
+  data.products.push(obj);
+  saveStorage(); clearSingle(); renderAll();
+}
+function clearSingle(){
+  document.getElementById("orderNoSingle").value="";
+  document.getElementById("artistSingle").value="";
+  document.getElementById("prodNameSingle").value="";
+  document.getElementById("styleSingle").value="";
+  document.getElementById("qtySingle").value="";
+  document.getElementById("oriCnySingle").value="";
+  document.getElementById("payCnySingle").value="";
+  document.getElementById("payTwdSingle").value="";
+  document.getElementById("recvTwdSingle").value="";
+  document.getElementById("last5Single").value="";
+  document.getElementById("remarkSingle").value="";
+  photoCache.single = []; renderPhotoPreview("single");
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("orderDateSingle").value=today;
+  document.getElementById("recvDateSingle").value=today;
+  calcSingle();
+}
+function saveMulti(){
+  const obj = {
+    type: "multi",
+    orderDate:document.getElementById("orderDateMulti").value,
+    orderNo:document.getElementById("orderNoMulti").value,
+    artist: "",
+    prodName: "",
+    style: "",
+    qty: 0,
+    multiItems: JSON.parse(JSON.stringify(multiRows)),
+    oriCny:Number(document.getElementById("oriCnyMulti").value||0),
+    payCny:Number(document.getElementById("payCnyMulti").value||0),
+    payTwd:Number(document.getElementById("payTwdMulti").value||0),
+    feeTwd:Number(document.getElementById("feeTwdMulti").value||0),
+    profitTwd:Number(document.getElementById("profitTwdMulti").value||0),
+    rate:Number(document.getElementById("rateMulti").value||0),
+    recvTwd:Number(document.getElementById("recvTwdMulti").value||0),
+    last5:document.getElementById("last5Multi").value,
+    recvSource:document.getElementById("recvSourceMulti").value,
+    recvDate:document.getElementById("recvDateMulti").value,
+    platform:document.getElementById("platformMulti").value,
+    shopName:document.getElementById("shopNameMulti").value,
+    photos:photoCache["multi"],
+    remark:document.getElementById("remarkMulti").value
+  }
+  pushHistory("orderNo", obj.orderNo);
+  pushHistory("shopName", obj.shopName);
+  pushHistory("recvSource", obj.recvSource);
+  pushHistory("platform", obj.platform);
+  data.products.push(obj);
+  saveStorage(); clearMulti(); renderAll();
+}
+function clearMulti(){
+  document.getElementById("orderNoMulti").value="";
+  document.getElementById("oriCnyMulti").value="";
+  document.getElementById("payCnyMulti").value="";
+  document.getElementById("payTwdMulti").value="";
+  document.getElementById("recvTwdMulti").value="";
+  document.getElementById("last5Multi").value="";
+  document.getElementById("shopNameMulti").value="";
+  document.getElementById("remarkMulti").value="";
+  photoCache.multi = []; renderPhotoPreview("multi");
+  multiRows = [{artist:"", name:"", style:"", qty:""}]; renderMultiRows();
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("orderDateMulti").value=today;
+  document.getElementById("recvDateMulti").value=today;
+  calcMulti();
+}
+function saveExch(){
+  const obj = {
+    type:"exch",
+    exchDate:document.getElementById("exchDate").value,
+    exchCny:Number(document.getElementById("exchCny").value||0),
+    exchTwd:Number(document.getElementById("exchTwd").value||0),
+    exchFee:Number(document.getElementById("exchFee").value||0),
+    exchRate:Number(document.getElementById("exchRate").value||0),
+    exchTarget:document.getElementById("exchTarget").value,
+    exchPurpose:document.getElementById("exchPurpose").value
+  }
+  pushHistory("exchTarget", obj.exchTarget);
+  pushHistory("exchPurpose", obj.exchPurpose);
+  data.products.push(obj);
+  saveStorage(); clearExch(); renderAll();
+}
+function clearExch(){
+  document.getElementById("exchCny").value="";
+  document.getElementById("exchTwd").value="";
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("exchDate").value = today;
+  calcExch();
+}
+
+function doSearch(){ searchKeyword = document.getElementById("searchInput").value.trim().toLowerCase(); renderAll(); }
+function clearSearch(){ document.getElementById("searchInput").value = ""; searchKeyword = ""; renderAll(); }
+function filterByKeyword(list){
+  if(!searchKeyword) return list;
+  return list.filter(it=>{
+    let textPool = "";
+    textPool += (it.orderDate||"") + (it.orderNo||"") + (it.artist||"") + (it.prodName||"") + (it.style||"") + (it.remark||"") + (it.shopName||"") + (it.platform||"") + (it.last5||"");
+    if(Array.isArray(it.multiItems)){ it.multiItems.forEach(p=>{ textPool += (p.artist||"") + (p.name||"") + (p.style||""); }) }
+    if(it.type==="exch") textPool += (it.exchDate||"") + (it.exchTarget||"") + (it.exchPurpose||"");
+    return textPool.toLowerCase().includes(searchKeyword);
+  })
+}
+function calcSum(list){
+  let sumCny = 0, sumTwd = 0;
+  list.forEach(it=>{
+    if(it.type!=="exch"){
+      sumCny += Number(it.payCny||0);
+      sumTwd += (Number(it.payTwd||0)+Number(it.feeTwd||0));
     }
-  }},
-  {path:'/finance',component:{
-    template:`
-      <div>
-        <div class="nav-bar">
-          <button class="nav-btn" @click="$router.push('/expense')">代購記帳</button>
-          <button class="nav-btn active">財務表</button>
+  })
+  document.getElementById("sumCny").innerText = sumCny.toFixed(2);
+  document.getElementById("sumTwd").innerText = Math.round(sumTwd);
+}
+function renderItems(list){
+  const wrap = document.getElementById("listWrap");wrap.innerHTML="";
+  list.forEach((it,idx)=>{
+    const card = document.createElement("div");card.className="item-card";
+    if(it.type==="exch"){
+      card.innerHTML = `
+        <div class="item-head"><b>儲值/換匯｜${it.exchDate}</b>
+        <div> <button onclick="editItem(${idx})">編輯</button> <button onclick="delItem(${idx})">刪除</button> </div>
         </div>
-        <div class="finance-filter">
-          <label>查詢範圍：</label>
-          <select v-model="filterMode">
-            <option value="all">全部資料</option>
-            <option value="range">自訂區間</option>
-          </select>
-          <input v-if="filterMode==='range'" v-model="startDate" type="date"/>
-          <span v-if="filterMode==='range'">～</span>
-          <input v-if="filterMode==='range'" v-model="endDate" type="date"/>
+        <table>
+          <tr><td>支付¥</td><td>${it.exchCny}</td><td>支付$</td><td>${it.exchTwd}</td></tr>
+          <tr><td>手續$</td><td>${it.exchFee}</td><td>匯率</td><td>${it.exchRate}</td></tr>
+          <tr><td>對方</td><td>${it.exchTarget||"-"}</td><td>用途</td><td>${it.exchPurpose||"-"}</td></tr>
+        </table>
+      `
+    }else if(it.type === "multi"){
+      let productHtml = "";
+      if(Array.isArray(it.multiItems)){
+        productHtml = it.multiItems.map(p=>`<div>▪ ${p.artist||"-"}｜${p.name||"-"}｜${p.style||"-"} ×${p.qty||0}</div>`).join("");
+      }
+      card.innerHTML = `
+        <div class="item-head"><b>【多品項】${it.orderDate}</b>
+        <div> <button onclick="editItem(${idx})">編輯</button> <button onclick="delItem(${idx})">刪除</button> </div>
         </div>
-        <div class="card">
-          <div>總筆數：{{listFilter.length}}</div>
-          <div>合計實付¥：{{sumCNY.toFixed(2)}}</div>
-          <div>合計實付$+手續$：{{sumTWD.toFixed(2)}}</div>
+        ${productHtml}
+        <table>
+          <tr>
+            <td>訂購帳號</td><td>${it.orderNo||"-"}</td>
+            <td>原¥</td><td>${it.oriCny}</td>
+            <td>實付¥</td><td>${it.payCny}</td>
+          </tr>
+          <tr>
+            <td>實付$</td><td>${it.payTwd}</td>
+            <td>手續$</td><td>${it.feeTwd}</td>
+            <td>利潤$</td><td>${it.profitTwd}</td>
+          </tr>
+          <tr>
+            <td>匯率</td><td>${it.rate}</td>
+            <td>實收$</td><td>${it.recvTwd}</td>
+            <td>收款來源</td><td>${it.recvSource||"-"}</td>
+          </tr>
+          <tr>
+            <td>末五碼</td><td>${it.last5||"-"}</td>
+            <td>收款日</td><td>${it.recvDate||"-"}</td>
+            <td>平台</td><td>${it.platform||"-"}</td>
+          </tr>
+          <tr>
+            <td>店面</td><td>${it.shopName||"-"}</td>
+            <td>備註</td><td>${it.remark||"-"}</td>
+            <td></td><td></td>
+          </tr>
+        </table>
+        ${it.photos && it.photos.length>0 ? `<div class="photo-preview">${it.photos.map(x=>`<img src="${x}">`).join("")}</div>`:""}
+      `
+    }else{
+      card.innerHTML = `
+        <div class="item-head"><b>${it.orderDate}｜${it.artist||""} ${it.prodName||""}</b>
+        <div> <button onclick="editItem(${idx})">編輯</button> <button onclick="delItem(${idx})">刪除</button> </div>
         </div>
-        <div v-for="r in listFilter" :key="r.id" class="record-item">
-          {{r.orderAccount||r.tradeDate}}｜{{r.recordType}}｜{{r.productName||r.purpose}}｜¥{{r.realPayCNY}} ${{r.realPayTWD}} 手續${{r.cardFeeTWD||r.exchangeFeeTWD}}
-        </div>
-      </div>
-    `,
-    setup(){
-      const store = useRecordStore();
-      const filterMode = ref('all');
-      const startDate = ref('');
-      const endDate = ref('');
-      const listFilter = computed(()=>{
-        if(filterMode.value==='all') return store.recordList;
-        return store.recordList.filter(x=>{
-          const d = new Date(x.orderDate || x.tradeDate);
-          return d >= new Date(startDate.value) && d <= new Date(endDate.value);
-        })
-      })
-      const sumCNY = computed(()=>listFilter.value.reduce((s,i)=>s+Number(i.realPayCNY||0)+Number(i.payCNY||0),0))
-      const sumTWD = computed(()=>listFilter.value.reduce((s,i)=>s + (Number(i.realPayTWD||0)+Number(i.cardFeeTWD||0)+Number(i.payTWD||0)+Number(i.exchangeFeeTWD||0)),0))
-      return {store,filterMode,startDate,endDate,listFilter,sumCNY,sumTWD}
+        <table>
+          <tr>
+            <td>訂購帳號</td><td>${it.orderNo||"-"}</td>
+            <td>人劇綜</td><td>${it.artist||"-"}</td>
+            <td>商品名稱</td><td>${it.prodName||"-"}</td>
+          </tr>
+          <tr>
+            <td>款式</td><td>${it.style||"-"}</td>
+            <td>數量</td><td>${it.qty}</td>
+            <td>原¥</td><td>${it.oriCny}</td>
+          </tr>
+          <tr>
+            <td>實付¥</td><td>${it.payCny}</td>
+            <td>實付$</td><td>${it.payTwd}</td>
+            <td>手續$</td><td>${it.feeTwd}</td>
+          </tr>
+          <tr>
+            <td>匯率</td><td>${it.rate}</td>
+            <td>利潤$</td><td>${it.profitTwd}</td>
+            <td>實收$</td><td>${it.recvTwd}</td>
+          </tr>
+          <tr>
+            <td>收款來源</td><td>${it.recvSource||"-"}</td>
+            <td>末五碼</td><td>${it.last5||"-"}</td>
+            <td>收款日</td><td>${it.recvDate||"-"}</td>
+          </tr>
+          <tr>
+            <td>平台</td><td>${it.platform||"-"}</td>
+            <td>店面</td><td>${it.shopName||"-"}</td>
+            <td>備註</td><td>${it.remark||"-"}</td>
+          </tr>
+        </table>
+        ${it.photos && it.photos.length>0 ? `<div class="photo-preview">${it.photos.map(x=>`<img src="${x}">`).join("")}</div>`:""}
+      `
     }
-  }}
-]
-const router = createRouter({history:createWebHashHistory(),routes})
-const pinia = createPinia();
-const app = createApp({});
-app.use(pinia);
-app.use(router);
-app.mount('#app');
+    wrap.appendChild(card);
+  })
+}
+function renderAll(){ let list = filterByKeyword([...data.products]); calcSum(list); renderItems(list); }
+function renderRange(){
+  const s = document.getElementById("startDate").value;
+  const e = document.getElementById("endDate").value;
+  if(!s || !e) return alert("請選起訖日期");
+  let filtered = data.products.filter(x=>{
+    const d = x.type==="exch" ? x.exchDate : x.orderDate;
+    return d >= s && d <= e;
+  })
+  filtered = filterByKeyword(filtered); calcSum(filtered); renderItems(filtered);
+}
+function editItem(idx){ alert("這版先簡化：編輯功能暫時移除，後續再加，舊資料不會不見！"); }
+function delItem(idx){ if(!confirm("確認刪除這筆帳務？")) return; data.products.splice(idx,1); saveStorage(); renderAll(); }
+
+window.onload = ()=>{
+  loadData();
+  blockState.single = false; blockState.multi = false; blockState.exch = false;
+  document.getElementById("panel-single").classList.remove("open");
+  document.getElementById("panel-multi").classList.remove("open");
+  document.getElementById("panel-exch").classList.remove("open");
+  document.getElementById("arrow-single").textContent="▼";
+  document.getElementById("arrow-multi").textContent="▼";
+  document.getElementById("arrow-exch").textContent="▼";
+  renderPhotoPreview("single"); renderPhotoPreview("multi");
+  multiRows = [{artist:"", name:"", style:"", qty:""}]; renderMultiRows();
+  document.addEventListener("click",(ev)=>{
+    if(!ev.target.closest(".auto-suggest")){
+      document.querySelectorAll(".suggest-list").forEach(x=>x.style.display="none");
+    }
+  })
+}
 </script>
+</body>
 </html>
