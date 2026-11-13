@@ -428,6 +428,15 @@ th{background:var(--main-purple);}
 </div>
 
 <script>
+// 抓台灣本地時區今日日期，開頁直接預設填入
+function getLocalToday(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
 let blockState = { single: false, multi: false, exch: false };
 function toggleBlock(key){
   blockState[key] = !blockState[key];
@@ -702,7 +711,7 @@ function clearSingle(){
   document.getElementById("last5Single").value="";
   document.getElementById("remarkSingle").value="";
   photoCache.single = []; renderPhotoPreview("single");
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalToday();
   document.getElementById("orderDateSingle").value=today;
   document.getElementById("recvDateSingle").value=today;
   calcSingle();
@@ -750,7 +759,7 @@ function clearMulti(){
   document.getElementById("remarkMulti").value="";
   photoCache.multi = []; renderPhotoPreview("multi");
   multiRows = [{artist:"", name:"", style:"", qty:""}]; renderMultiRows();
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalToday();
   document.getElementById("orderDateMulti").value=today;
   document.getElementById("recvDateMulti").value=today;
   calcMulti();
@@ -774,7 +783,7 @@ function saveExch(){
 function clearExch(){
   document.getElementById("exchCny").value="";
   document.getElementById("exchTwd").value="";
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalToday();
   document.getElementById("exchDate").value = today;
   calcExch();
 }
@@ -914,6 +923,7 @@ function editItem(idx){ alert("這版先簡化：編輯功能暫時移除，後�
 function delItem(idx){ if(!confirm("確認刪除這筆帳務？")) return; data.products.splice(idx,1); saveStorage(); renderAll(); }
 
 window.onload = ()=>{
+  const today = getLocalToday();
   loadData();
   blockState.single = false; blockState.multi = false; blockState.exch = false;
   document.getElementById("panel-single").classList.remove("open");
@@ -924,6 +934,14 @@ window.onload = ()=>{
   document.getElementById("arrow-exch").textContent="▼";
   renderPhotoPreview("single"); renderPhotoPreview("multi");
   multiRows = [{artist:"", name:"", style:"", qty:""}]; renderMultiRows();
+
+  // 【開頁直接預設填入今日日期】
+  document.getElementById("orderDateSingle").value = today;
+  document.getElementById("recvDateSingle").value = today;
+  document.getElementById("orderDateMulti").value = today;
+  document.getElementById("recvDateMulti").value = today;
+  document.getElementById("exchDate").value = today;
+
   document.addEventListener("click",(ev)=>{
     if(!ev.target.closest(".auto-suggest")){
       document.querySelectorAll(".suggest-list").forEach(x=>x.style.display="none");
