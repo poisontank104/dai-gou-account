@@ -13,6 +13,7 @@
   --text:#333;
   --bg:white;
   --border:#ddd;
+  --orange-deep:#d49b78;
 }
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, sans-serif;}
 body{background:var(--main-purple);color:var(--text);padding:12px;}
@@ -43,6 +44,11 @@ h1{text-align:center;margin-bottom:16px;color:#7b68a8;font-size:22px;}
 .single-collapse-content{padding:12px;display:none;}
 .single-collapse-content.open{display:block;}
 .btn-group{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-group .btn-full{
+  flex:1;
+  background:var(--orange-deep);
+  color:white;
+}
 button{padding:10px 14px;border:none;border-radius:10px;cursor:pointer;font-size:15px;}
 .filter-bar{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:12px;border-top:1px solid #eee;}
 .filter-content{display:none;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;}
@@ -92,7 +98,7 @@ input.no-spin {
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;}
 th,td{border:1px solid #eee;padding:8px;text-align:left;}
 th{background:var(--main-purple);}
-.sub-title{font-weight:bold;color:#7b68a8;margin:12px 0 6px 0;font-size:15px;}
+.sub-title{font-weight:bold;color:#7b68a8;margin:16px 0 6px 0;font-size:16px;opacity:0.4;}
 @media(max-width:600px){
   .stat-row{grid-template-columns:1fr;}
   .form-row{grid-template-columns:1fr !important;}
@@ -205,7 +211,7 @@ th{background:var(--main-purple);}
             <input type="number" id="profitTwdSingle" readonly>
           </div>
         </div>
-        <div class="sub-title">客人入帳</div>
+        <div class="sub-title">入賬資料</div>
         <div class="form-row row-4short">
           <div>
             <label>實收金額$</label>
@@ -247,8 +253,8 @@ th{background:var(--main-purple);}
           <input type="hidden" id="photoArrSingle">
         </div>
         <div class="btn-group" style="margin-top:12px;">
-          <button onclick="saveSingle()">儲存</button>
           <button onclick="clearSingle()">清空</button>
+          <button class="btn-full" onclick="saveSingle()">儲存</button>
         </div>
       </div>
     </div>
@@ -306,7 +312,7 @@ th{background:var(--main-purple);}
             <input type="number" id="profitTwdMulti" readonly>
           </div>
         </div>
-        <div class="sub-title">客人入帳</div>
+        <div class="sub-title">入賬資料</div>
         <div class="form-row row-4short">
           <div>
             <label>實收金額$</label>
@@ -348,8 +354,8 @@ th{background:var(--main-purple);}
           <input type="hidden" id="photoArrMulti">
         </div>
         <div class="btn-group" style="margin-top:12px;">
-          <button onclick="saveMulti()">儲存</button>
           <button onclick="clearMulti()">清空</button>
+          <button class="btn-full" onclick="saveMulti()">儲存</button>
         </div>
       </div>
     </div>
@@ -400,8 +406,8 @@ th{background:var(--main-purple);}
           <div></div>
         </div>
         <div class="btn-group" style="margin-top:12px;">
-          <button onclick="saveExch()">儲存</button>
           <button onclick="clearExch()">清空</button>
+          <button class="btn-full" onclick="saveExch()">儲存</button>
         </div>
       </div>
     </div>
