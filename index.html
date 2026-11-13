@@ -115,7 +115,7 @@ function convertOldRecord(old){
 // ========== Pinia Store ==========
 const useRecordStore = defineStore('record',{
   state:()=>({
-    rawList:[],
+    rawList:[], // 原始未轉換資料（保留原始舊資料不覆蓋）
     suggestion:{
       orderAccount:[],
       dramaTag:[],
@@ -161,28 +161,8 @@ const useRecordStore = defineStore('record',{
       if(raw) this.rawList = JSON.parse(raw);
       const sug = localStorage.getItem("suggestion");
       if(sug) this.suggestion = JSON.parse(sug);
-
-      // ✅ 重點修復：舊selectOpts和預設合併，缺少的key補上預設陣列
-      const defaultOpts = {
-        payMethod:["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"],
-        receiveSource:["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"],
-        platform:["淘寶","淘寶（騰訊）","淘寶（優酷）","淘寶（愛奇藝）","騰訊","優酷","愛奇藝","小芒","微店","微信（拼團呀）","微信（拼谷）","閑魚","小紅書","抖音","京東","QQ音樂","酷狗音樂","網易雲","拼多多","阿里巴巴","微博","紛玩島","大麥","百度網盤"],
-        targetUser:["解語花","友宜集運"],
-        purpose:["換匯","儲值集運"]
-      }
-      const optsStr = localStorage.getItem("selectOpts");
-      if(optsStr){
-        const savedOpts = JSON.parse(optsStr);
-        // 只補不存在的key，已經有的保留（你新增的選項不會丟掉）
-        for(const k in defaultOpts){
-          if(!savedOpts[k]){
-            savedOpts[k] = [...defaultOpts[k]]
-          }
-        }
-        this.selectOpts = savedOpts;
-      }else{
-        this.selectOpts = {...defaultOpts}
-      }
+      const opts = localStorage.getItem("selectOpts");
+      if(opts) this.selectOpts = JSON.parse(opts);
     },
     saveRaw(){
       localStorage.setItem("代购RecordRaw",JSON.stringify(this.rawList));
