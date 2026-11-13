@@ -2,643 +2,404 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>代購記帳</title>
-<!-- 改用 jsDelivr，GitHub Pages 環境穩定度更高 -->
-<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pinia@2/dist/pinia.iife.prod.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue-router@4/dist/vue-router.global.prod.js"></script>
 <style>
 :root{
-  --main-purple: #e9e4f5;
-  --card-single: #d8cfee;
-  --card-multi: #dcebf8;
-  --card-exchange: #dcf2e8;
-  --text-primary: #2c2c2c;
-  --text-secondary: #666;
-  --border-color: #d1c8e6;
-  --btn-primary: #b8a9dd;
-  --btn-hover: #a492d0;
-  --danger: #e57373;
-  --success: #81c784;
-  --white: #ffffff;
-  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --main-purple:#e9e4f5;
+  --purple-dark:#b8aed8;
+  --blue-light:#c8d8f0;
+  --green-light:#d0e9dd;
+  --text:#333;
+  --bg:white;
+  --border:#ddd;
 }
-*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;}
-body{background:var(--main-purple);color:var(--text-primary);padding:12px;}
-.container{max-width:1000px;margin:0 auto;}
-.nav-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
-.nav-btn{padding:10px 16px;border:none;border-radius:10px;background:var(--btn-primary);color:#fff;font-weight:500;cursor:pointer;transition:0.2s;}
-.nav-btn:hover{background:var(--btn-hover);}
-.nav-btn.active{box-shadow:0 0 0 2px #fff;}
-.card{background:var(--white);border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid var(--border-color);}
-.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
-.stat-item{padding:16px;border-radius:10px;text-align:center;font-weight:500;}
-.stat-item:nth-child(1){background:#d8cfee;}
-.stat-item:nth-child(2){background:#dcebf8;}
-.form-title{font-weight:600;margin:12px 0 6px;font-size:1.05rem;}
-.sub-title{font-weight:600;margin:18px 0 8px;font-size:1.1rem;}
-.row{display:grid;gap:10px;margin-bottom:10px;align-items:center;}
-.row-2{grid-template-columns:1fr 1fr;}
-.row-3{grid-template-columns:0.8fr 1.4fr 0.6fr;}
-.row-4{grid-template-columns:0.7fr 1fr 0.6fr 0.5fr;}
-input, select{padding:10px;border:1px solid var(--border-color);border-radius:8px;font-size:1rem;background:#fff;}
-input[type="number"]{-moz-appearance:textfield;}
-input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{display:none;}
-.autocomplete-wrap{position:relative;}
-.suggest-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--border-color);border-radius:8px;z-index:99;max-height:160px;overflow-y:auto;}
-.suggest-item{padding:8px 10px;cursor:pointer;}
-.suggest-item:hover{background:var(--main-purple);}
-.btn{padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:500;transition:0.2s;}
-.btn-add{background:var(--btn-primary);color:#fff;margin-bottom:14px;}
-.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:100;}
-.modal{width:94%;max-width:720px;max-height:90vh;overflow-y:auto;background:#fff;border-radius:14px;padding:16px;}
-.collapse-header{padding:12px;border-radius:10px;margin-bottom:8px;cursor:pointer;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
-.collapse-single{background:var(--card-single);}
-.collapse-multi{background:var(--card-multi);}
-.collapse-exchange{background:var(--card-exchange);}
-.upload-box{width:64px;height:64px;border:2px dashed var(--border-color);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-secondary);cursor:pointer;position:relative;}
-.upload-box input{position:absolute;inset:0;opacity:0;cursor:pointer;}
-.img-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-.img-preview img{width:64px;height:64px;object-fit:cover;border-radius:6px;}
-.record-item{padding:12px;border-radius:10px;background:#fff;margin-bottom:10px;border:1px solid var(--border-color);cursor:pointer;}
-.record-item:hover{background:#f8f6fc;}
-.finance-filter{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
-.error-tip{padding:20px;color:red;text-align:center;font-size:16px;}
-@media(max-width:640px){
-  .row-3,.row-4,.stat-row{grid-template-columns:1fr;}
-}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, sans-serif;}
+body{background:var(--main-purple);color:var(--text);padding:12px;}
+.container{max-width:900px;margin:0 auto;background:var(--bg);border-radius:16px;padding:16px;box-shadow:0 2px 12px #00000015;}
+h2{text-align:center;margin-bottom:16px;color:#6b5b95;}
+.search-wrap{margin-bottom:16px;}
+.search-wrap input{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;font-size:16px;}
+.collapse-btn{width:100%;padding:12px;background:#dcd5ee;border:none;border-radius:10px;font-size:16px;margin-bottom:8px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.collapse-content{padding:12px;border:1px solid var(--purple-dark);border-radius:10px;margin-bottom:12px;display:none;}
+.collapse-content.open{display:block;}
+.form-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.form-row > div{flex:1;min-width:120px;}
+label{display:block;font-size:13px;margin-bottom:4px;color:#555;}
+input,select{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:15px;}
+.product-block{border:1px solid #e2ddf0;border-radius:8px;padding:10px;margin-bottom:10px;position:relative;}
+.add-product{opacity:0.7;padding:10px;width:100%;border:1px dashed #999;background:#f4f2fa;border-radius:8px;cursor:pointer;margin:8px 0;}
+.photo-box{width:70px;height:70px;border-radius:8px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f8f8f8;overflow:hidden;}
+.photo-box svg{width:32px;height:32px;fill:#888;}
+.photo-box img{max-width:100%;max-height:100%;object-fit:cover;}
+.record-group{margin:18px 0;}
+.group-title{font-weight:bold;color:#6b5b95;margin:8px 0 6px;}
+.record-item{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;}
+.btn{padding:8px 12px;border-radius:6px;border:none;cursor:pointer;margin:4px;font-size:14px;}
+.btn-save{background:#78b998;color:#fff;}
+.btn-edit{background:#8778c2;color:#fff;}
+.btn-del{background:#d66;color:#fff;}
+.modal{position:fixed;inset:0;background:#00000044;display:none;align-items:center;justify-content:center;padding:10px;z-index:99;}
+.modal.open{display:flex;}
+.modal-inner{background:white;border-radius:14px;padding:16px;max-width:850px;width:100%;max-height:90vh;overflow-y:auto;}
+.customer-title{font-size:14px;font-weight:bold;margin:10px 0 4px;color:#7766aa;}
 </style>
 </head>
 <body>
-<div id="app" class="container">
-  <div class="error-tip" v-if="loadError">
-    ⚠️ JS資源載入失敗，請重新整理頁面，切換網路環境。
+<div class="container">
+  <h2>代購記帳</h2>
+  <div class="search-wrap">
+    <input id="searchInput" placeholder="關鍵字搜尋：人劇綜、商品、訂購帳號、備註..." />
+  </div>
+
+  <button class="collapse-btn" data-target="formSingle">單品項 <span>▼</span></button>
+  <div class="collapse-content" id="formSingle">
+    <div class="form-row">
+      <div><label>訂購帳號</label><input class="f-single" data-name="orderId"></div>
+      <div><label>訂購日期</label><input class="f-single" data-name="orderDate" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div><label>人劇綜</label><input class="f-single" data-name="artist"></div>
+      <div style="flex:2;"><label>商品名稱</label><input class="f-single" data-name="productName"></div>
+      <div style="flex:0.8;"><label>款式</label><input class="f-single" data-name="style"></div>
+      <div style="flex:0.6;"><label>數量</label><input class="f-single" data-name="qty" type="number" min="1" value="1"></div>
+    </div>
+    <div class="form-row">
+      <div><label>原人民幣¥</label><input class="f-single" data-name="rmbOrig" type="number" step="0.01"></div>
+      <div><label>實付人民幣¥</label><input class="f-single" data-name="rmbPay" type="number" step="0.01"></div>
+      <div><label>實付台幣$</label><input class="f-single" data-name="twPay" type="number" step="0.01"></div>
+    </div>
+    <div class="form-row">
+      <div><label>預計刷卡手續費$</label><input class="f-single" data-name="fee" readonly></div>
+      <div><label>匯率</label><input class="f-single" data-name="rate" type="number" step="0.0001"></div>
+      <div><label>實際利潤$</label><input class="f-single" data-name="profit" type="number" step="0.01"></div>
+    </div>
+    <div class="customer-title">客人入帳</div>
+    <div class="form-row">
+      <div><label>付款方式</label><input class="f-single" data-name="payWay"></div>
+      <div><label>收款來源</label><input class="f-single" data-name="source"></div>
+      <div><label>收款日期</label><input class="f-single" data-name="receiveDate" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div><label>下單來源</label><input class="f-single" data-name="platform"></div>
+      <div><label>店面名稱</label><input class="f-single" data-name="shopName"></div>
+      <div><label>訂單編號</label><input class="f-single" data-name="orderNo"></div>
+    </div>
+    <div class="form-row">
+      <div><label>周邊編號</label><input class="f-single" data-name="goodsNo"></div>
+      <div><label>物流單號</label><input class="f-single" data-name="logisticsNo"></div>
+      <div><label>周邊物流</label><input class="f-single" data-name="goodsLogistics"></div>
+    </div>
+    <div class="form-row">
+      <div><label>需要提確</label><input class="f-single" data-name="needCheck"></div>
+      <div><label>需要二補</label><input class="f-single" data-name="needResend"></div>
+      <div class="photo-box" id="photoSingle">
+        <svg viewBox="0 0 24 24"><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0-7a7 7 0 0 0-7 7 7 7 0 0 0 7 7 7 7 0 0 0 7-7 7 7 0 0 0-7-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+        <input type="file" accept="image/*" hidden class="f-single" data-name="photo" id="photoInputSingle">
+      </div>
+      <div><label>官方發布來源</label><input class="f-single" data-name="officialSource"></div>
+    </div>
+    <div class="form-row">
+      <div><label>空白框</label><input class="f-single" data-name="blank"></div>
+      <div><label>備註</label><input class="f-single" data-name="remark"></div>
+    </div>
+    <button class="btn btn-save" onclick="saveSingle()">儲存單品項</button>
+  </div>
+
+  <button class="collapse-btn" data-target="formMulti">多品項 <span>▼</span></button>
+  <div class="collapse-content" id="formMulti">
+    <div class="form-row">
+      <div><label>訂購帳號</label><input id="multiOrderId"></div>
+      <div><label>訂購日期</label><input id="multiOrderDate" type="date"></div>
+    </div>
+    <div id="productListWrap">
+      <div class="product-block product-item">
+        <div class="form-row">
+          <div><label>人劇綜</label><input class="p-artist"></div>
+          <div style="flex:2;"><label>商品名稱</label><input class="p-name"></div>
+          <div style="flex:0.8;"><label>款式</label><input class="p-style"></div>
+          <div style="flex:0.6;"><label>數量</label><input class="p-qty" type="number" min="1" value="1"></div>
+        </div>
+        <div class="form-row">
+          <div><label>原人民幣¥</label><input class="p-rmbOrig" type="number" step="0.01"></div>
+          <div><label>實付人民幣¥</label><input class="p-rmbPay" type="number" step="0.01"></div>
+          <div><label>實付台幣$</label><input class="p-twPay" type="number" step="0.01"></div>
+        </div>
+        <div class="form-row">
+          <div><label>預計刷卡手續費$</label><input class="p-fee" readonly></div>
+          <div><label>匯率</label><input class="p-rate" type="number" step="0.0001"></div>
+          <div><label>實際利潤$</label><input class="p-profit" type="number" step="0.01"></div>
+        </div>
+        <div class="customer-title">客人入帳</div>
+        <div class="form-row">
+          <div><label>付款方式</label><input class="p-payWay"></div>
+          <div><label>收款來源</label><input class="p-source"></div>
+          <div><label>收款日期</label><input class="p-receiveDate" type="date"></div>
+        </div>
+        <div class="form-row">
+          <div><label>下單來源</label><input class="p-platform"></div>
+          <div><label>店面名稱</label><input class="p-shopName"></div>
+          <div><label>訂單編號</label><input class="p-orderNo"></div>
+        </div>
+        <div class="form-row">
+          <div><label>周邊編號</label><input class="p-goodsNo"></div>
+          <div><label>物流單號</label><input class="p-logisticsNo"></div>
+          <div><label>周邊物流</label><input class="p-goodsLogistics"></div>
+        </div>
+        <div class="form-row">
+          <div><label>需要提確</label><input class="p-needCheck"></div>
+          <div><label>需要二補</label><input class="p-needResend"></div>
+          <div class="photo-box p-photoBox">
+            <svg viewBox="0 0 24 24"><path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0-7a7 7 0 0 0-7 7 7 7 0 0 0 7 7 7 7 0 0 0 7-7 7 7 0 0 0-7-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/></svg>
+            <input type="file" accept="image/*" hidden class="p-photo">
+          </div>
+          <div><label>官方發布來源</label><input class="p-officialSource"></div>
+        </div>
+        <div class="form-row">
+          <div><label>空白框</label><input class="p-blank"></div>
+          <div><label>備註</label><input class="p-remark"></div>
+        </div>
+      </div>
+    </div>
+    <button class="add-product" onclick="addProductRow()">+ 新增一組商品</button>
+    <button class="btn btn-save" onclick="saveMulti()">儲存多品項</button>
+  </div>
+
+  <button class="collapse-btn" data-target="formExchange">儲值換匯 <span>▼</span></button>
+  <div class="collapse-content" id="formExchange">
+    <p>這裡放儲值換匯欄位，你後續要再加欄位再跟我說</p>
+    <button class="btn btn-save">儲存換匯</button>
+  </div>
+
+  <div id="recordList"></div>
+</div>
+
+<!-- 編輯彈窗 -->
+<div class="modal" id="editModal">
+  <div class="modal-inner">
+    <h3>編輯記帳</h3>
+    <div id="editFormBody"></div>
+    <button class="btn btn-save" onclick="submitEdit()">確認修改</button>
+    <button class="btn" onclick="closeEditModal()">取消</button>
   </div>
 </div>
 
 <script>
-window.onerror = function(msg,url,line){
-  const appDiv = document.getElementById('app');
-  if(appDiv){
-    appDiv.innerHTML = `<div class="error-tip">程式發生錯誤：${msg}<br/>請嘗試清除快取(Ctrl+Shift+R)或是切換網路</div>`;
-  }
-};
+// 資料儲存key
+const STORAGE_KEY = "daiGouRecords";
+// 初始化
+let records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+// 日期預設今天
+function getToday(){return new Date().toISOString().split('T')[0];}
 
-// 安全解析localStorage
-function safeParse(str, fallback) {
-  try {
-    if(!str) return fallback;
-    return JSON.parse(str);
-  } catch(e) {
-    console.warn("localStorage資料損壞", e);
-    return fallback;
-  }
-}
-
-//舊紀錄轉換
-function convertOldRecord(old){
-  if(!old) return null;
-  return {
-    id: old.id || crypto.randomUUID(),
-    recordType: "single",
-    orderAccount: old.orderAccount || "",
-    orderDate: old.date || "",
-    dramaTag: old.tag || "",
-    productName: old.name || "",
-    style: old.style || "",
-    qty: Number(old.qty || 1),
-    originalCNY: Number(old.originalCNY || 0),
-    realPayCNY: Number(old.realCNY || 0),
-    realPayTWD: Number(old.realTWD || 0),
-    payMethod: old.payMethod || "",
-    cardFeeTWD: Number(old.cardFeeTWD || 0),
-    rate: Number(old.rate || 0),
-    profitTWD: Number(old.profitTWD || 0),
-    receiveTWD: Number(old.receiveTWD || 0),
-    receiveSource: old.receiveSource || "",
-    last5Code: old.last5Code || "",
-    receiveDate: old.receiveDate || "",
-    platform: old.platform || "",
-    shopName: old.shopName || "",
-    imgs: Array.isArray(old.imgs) ? old.imgs : [],
-    remark: old.remark || "",
-    tradeDate: "",
-    payCNY: 0,
-    payTWD: 0,
-    exchangeFeeTWD:0,
-    targetUser:"",
-    purpose:""
-  }
-}
-
-const { createApp, ref, reactive, computed, onMounted } = Vue;
-const { createPinia, defineStore } = Pinia;
-const { createRouter, createWebHashHistory } = VueRouter;
-
-const useRecordStore = defineStore('record',{
-  state:()=>({
-    rawList:[],
-    suggestion:{ orderAccount:[], dramaTag:[], shopName:[] },
-    selectOpts:{
-      payMethod:["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"],
-      receiveSource:["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"],
-      platform:["淘寶","淘寶（騰訊）","淘寶（優酷）","淘寶（愛奇藝）","騰訊","優酷","愛奇藝","小芒","微店","微信（拼團呀）","微信（拼谷）","閑魚","小紅書","抖音","京東","QQ音樂","酷狗音樂","網易雲","拼多多","阿里巴巴","微博","紛玩島","大麥","百度網盤"],
-      targetUser:["解語花","友宜集運"],
-      purpose:["換匯","儲值集運"]
-    }
-  }),
-  getters:{
-    recordList(state){
-      return state.rawList.map(item=>{
-        if(!item.recordType) return convertOldRecord(item);
-        return item;
-      }).filter(Boolean)
-    },
-    monthCNY(state){
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = now.getMonth();
-      return this.recordList.filter(r=>{
-        const d = new Date(r.orderDate || r.tradeDate);
-        return d.getFullYear()===y && d.getMonth()===m
-      }).reduce((s,i)=>s + Number(i.realPayCNY||0),0)
-    },
-    monthTWD(state){
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = now.getMonth();
-      return this.recordList.filter(r=>{
-        const d = new Date(r.orderDate || r.tradeDate);
-        return d.getFullYear()===y && d.getMonth()===m
-      }).reduce((s,i)=>s + (Number(i.realPayTWD||0)+Number(i.cardFeeTWD||0)),0)
-    }
-  },
-  actions:{
-    load(){
-      const raw = safeParse(localStorage.getItem("代购RecordRaw"), []);
-      this.rawList = raw;
-      const sug = safeParse(localStorage.getItem("suggestion"), {orderAccount:[],dramaTag:[],shopName:[]});
-      this.suggestion = sug;
-      const defaultOpts = {
-        payMethod:["支付寶¥-中信","支付寶¥-國泰","支付寶-¥餘額","微信¥-中信","微信¥-國泰","微信-¥餘額","中信$","郵局$","台新$","國泰$","台灣配$"],
-        receiveSource:["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"],
-        platform:["淘寶","淘寶（騰訊）","淘寶（優酷）","淘寶（愛奇藝）","騰訊","優酷","愛奇藝","小芒","微店","微信（拼團呀）","微信（拼谷）","閑魚","小紅書","抖音","京東","QQ音樂","酷狗音樂","網易雲","拼多多","阿里巴巴","微博","紛玩島","大麥","百度網盤"],
-        targetUser:["解語花","友宜集運"],
-        purpose:["換匯","儲值集運"]
-      }
-      const savedOpts = safeParse(localStorage.getItem("selectOpts"), null);
-      if(savedOpts && typeof savedOpts === "object"){
-        for(const k in defaultOpts){
-          if(!savedOpts[k] || !Array.isArray(savedOpts[k])) savedOpts[k] = [...defaultOpts[k]];
-        }
-        this.selectOpts = savedOpts;
-      }else{
-        this.selectOpts = {...defaultOpts};
-      }
-    },
-    saveRaw(){ localStorage.setItem("代购RecordRaw",JSON.stringify(this.rawList)); },
-    saveSuggest(){ localStorage.setItem("suggestion",JSON.stringify(this.suggestion)); },
-    saveOpts(){ localStorage.setItem("selectOpts",JSON.stringify(this.selectOpts)); },
-    addSuggest(key,val){
-      if(!val) return;
-      if(!this.suggestion[key].includes(val)){ this.suggestion[key].push(val); this.saveSuggest(); }
-    },
-    addOpt(key,val){
-      if(!val) return;
-      if(!this.selectOpts[key].includes(val)){ this.selectOpts[key].push(val); this.saveOpts(); }
-    },
-    addRecord(rec){
-      this.rawList.push(rec); this.saveRaw();
-      this.addSuggest("orderAccount",rec.orderAccount);
-      this.addSuggest("dramaTag",rec.dramaTag);
-      this.addSuggest("shopName",rec.shopName);
-      if(rec.payMethod) this.addOpt("payMethod",rec.payMethod);
-      if(rec.receiveSource) this.addOpt("receiveSource",rec.receiveSource);
-      if(rec.platform) this.addOpt("platform",rec.platform);
-      if(rec.targetUser) this.addOpt("targetUser",rec.targetUser);
-      if(rec.purpose) this.addOpt("purpose",rec.purpose);
-    },
-    updateRecord(id,newRec){
-      const idx = this.rawList.findIndex(i=>i.id===id);
-      if(idx>-1){
-        this.rawList[idx] = newRec; this.saveRaw();
-        this.addSuggest("orderAccount",newRec.orderAccount);
-        this.addSuggest("dramaTag",newRec.dramaTag);
-        this.addSuggest("shopName",newRec.shopName);
-        if(newRec.payMethod) this.addOpt("payMethod",newRec.payMethod);
-        if(newRec.receiveSource) this.addOpt("receiveSource",newRec.receiveSource);
-        if(newRec.platform) this.addOpt("platform",newRec.platform);
-        if(newRec.targetUser) this.addOpt("targetUser",newRec.targetUser);
-        if(newRec.purpose) this.addOpt("purpose",newRec.purpose);
-      }
-    },
-    delRecord(id){
-      const idx = this.rawList.findIndex(i=>i.id===id);
-      if(idx>-1){ this.rawList.splice(idx,1); this.saveRaw(); }
-    }
+// 折疊按鈕
+document.querySelectorAll('.collapse-btn').forEach(btn=>{
+  btn.onclick = ()=>{
+    const target = document.getElementById(btn.dataset.target);
+    target.classList.toggle('open');
+    btn.querySelector('span').textContent = target.classList.contains('open') ? '▲' : '▼';
   }
 })
 
-const routes = [
-  {path:'/', redirect:'/expense'},
-  {path:'/expense',component:{
-    template:`
-      <div>
-        <div class="nav-bar">
-          <button class="nav-btn active">代購記帳</button>
-          <button class="nav-btn" @click="$router.push('/finance')">財務表</button>
-        </div>
-        <div class="stat-row">
-          <div class="stat-item">本月總支出 ¥：{{ store.monthCNY.toFixed(2) }}</div>
-          <div class="stat-item">本月總支出 $：{{ store.monthTWD.toFixed(2) }}</div>
-        </div>
-        <button class="btn btn-add" @click="openModal()">新增帳務</button>
-        <div v-for="r in store.recordList" :key="r.id" class="record-item" @click="editRec(r)">
-          <div>{{r.orderAccount || r.tradeDate}}｜{{r.recordType==='single'?'單品項':r.recordType==='multi'?'多品項':'儲值/換匯'}}｜{{r.productName||r.purpose||''}}</div>
-          <div style="font-size:0.9rem;color:#666">¥{{r.realPayCNY}} | ${{r.realPayTWD}} 手續${{r.cardFeeTWD}}</div>
-        </div>
-        <div v-if="modalShow" class="modal-mask" @click.self="modalShow=false">
-          <div class="modal">
-            <div class="collapse-header collapse-single" @click="tabSingle=!tabSingle">帳務｜單品項 <span>{{tabSingle?'−':'+'}}</span></div>
-            <div v-if="tabSingle">
-              <div class="row row-2">
-                <div class="autocomplete-wrap">
-                  <label>訂購帳號</label>
-                  <input v-model="formSingle.orderAccount" @input="filterSug('orderAccount','single')" @blur="hideSug" />
-                  <div class="suggest-list" v-if="sugShow.orderAccount && sugList.orderAccount.length">
-                    <div class="suggest-item" v-for="s in sugList.orderAccount" @click="pickSug('orderAccount','single',s)">{{s}}</div>
-                  </div>
-                </div>
-                <div><label>訂購日期</label><input v-model="formSingle.orderDate" type="date"/></div>
-              </div>
-              <div class="row row-3">
-                <div class="autocomplete-wrap">
-                  <label>人劇綜</label>
-                  <input v-model="formSingle.dramaTag" @input="filterSug('dramaTag','single')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.dramaTag && sugList.dramaTag.length">
-                    <div class="suggest-item" v-for="s in sugList.dramaTag" @click="pickSug('dramaTag','single',s)">{{s}}</div>
-                  </div>
-                </div>
-                <div><label>商品名稱</label><input v-model="formSingle.productName"/></div>
-                <div><label>款式</label><input v-model="formSingle.style"/></div>
-                <div><label>數量</label><input v-model.number="formSingle.qty" type="number" inputmode="decimal"/></div>
-              </div>
-              <div class="sub-title">費用輸入</div>
-              <div class="row row-4">
-                <div><label>原金額 ¥</label><input v-model.number="formSingle.originalCNY" type="number" inputmode="decimal"/></div>
-                <div><label>實付金額 ¥</label><input v-model.number="formSingle.realPayCNY" type="number" inputmode="decimal" @input="calcSingle"/></div>
-                <div><label>實付金額 $</label><input v-model.number="formSingle.realPayTWD" type="number" inputmode="decimal" @input="calcSingle"/></div>
-              </div>
-              <div class="row row-4">
-                <div>
-                  <label>付款方式</label>
-                  <select v-model="formSingle.payMethod" @change="handleSel('payMethod','single')">
-                    <option v-for="o in store.selectOpts.payMethod" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formSingle.payMethod==='__other__'" v-model="formSingle.payMethodOther" placeholder="輸入新付款方式"/>
-                </div>
-                <div><label>預計刷卡手續費 $</label><input v-model.number="formSingle.cardFeeTWD" readonly/></div>
-                <div><label>匯率</label><input v-model.number="formSingle.rate" readonly/></div>
-                <div><label>實際利潤 $</label><input v-model.number="formSingle.profitTWD" readonly/></div>
-              </div>
-              <div class="sub-title">客戶入帳資料</div>
-              <div class="row row-4">
-                <div><label>實收金額 $</label><input v-model.number="formSingle.receiveTWD" type="number" inputmode="decimal" @input="calcSingle"/></div>
-                <div>
-                  <label>收款來源</label>
-                  <select v-model="formSingle.receiveSource" @change="handleSel('receiveSource','single')">
-                    <option v-for="o in store.selectOpts.receiveSource" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formSingle.receiveSource==='__other__'" v-model="formSingle.receiveSourceOther" placeholder="輸入新收款來源"/>
-                </div>
-                <div><label>末五碼</label><input v-model="formSingle.last5Code"/></div>
-                <div><label>收款日期</label><input v-model="formSingle.receiveDate" type="date"/></div>
-              </div>
-              <div class="row row-2">
-                <div>
-                  <label>下單平台</label>
-                  <select v-model="formSingle.platform" @change="handleSel('platform','single')">
-                    <option v-for="o in store.selectOpts.platform" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formSingle.platform==='__other__'" v-model="formSingle.platformOther" placeholder="輸入新平台"/>
-                </div>
-                <div class="autocomplete-wrap">
-                  <label>店面名稱</label>
-                  <input v-model="formSingle.shopName" @input="filterSug('shopName','single')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.shopName && sugList.shopName.length">
-                    <div class="suggest-item" v-for="s in sugList.shopName" @click="pickSug('shopName','single',s)">{{s}}</div>
-                  </div>
-                </div>
-              </div>
-              <div class="form-title">照片</div>
-              <div class="upload-box">📷<input type="file" multiple accept="image/*" @change="uploadImg($event,'single')"/></div>
-              <div class="img-preview"><img v-for="(i,idx) in formSingle.imgs" :key="idx" :src="i" @click="previewImg(i)" style="cursor:pointer"/></div>
-              <div class="form-title">備註</div>
-              <input v-model="formSingle.remark"/>
-              <div style="margin-top:14px;display:flex;gap:8px;">
-                <button class="btn btn-add" @click="saveSingle">儲存</button>
-                <button class="btn" style="background:#ccc" @click="modalShow=false">取消</button>
-              </div>
-            </div>
-            <div class="collapse-header collapse-multi" @click="tabMulti=!tabMulti">帳務｜多品項 <span>{{tabMulti?'−':'+'}}</span></div>
-            <div v-if="tabMulti">
-              <div class="row row-2">
-                <div class="autocomplete-wrap">
-                  <label>訂購帳號</label>
-                  <input v-model="formMulti.orderAccount" @input="filterSug('orderAccount','multi')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.orderAccount && sugList.orderAccount.length">
-                    <div class="suggest-item" v-for="s in sugList.orderAccount" @click="pickSug('orderAccount','multi',s)">{{s}}</div>
-                  </div>
-                </div>
-                <div><label>訂購日期</label><input v-model="formMulti.orderDate" type="date"/></div>
-              </div>
-              <div class="row row-3">
-                <div class="autocomplete-wrap">
-                  <label>人劇綜</label>
-                  <input v-model="formMulti.dramaTag" @input="filterSug('dramaTag','multi')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.dramaTag && sugList.dramaTag.length">
-                    <div class="suggest-item" v-for="s in sugList.dramaTag" @click="pickSug('dramaTag','multi',s)">{{s}}</div>
-                  </div>
-                </div>
-                <div><label>商品名稱</label><input v-model="formMulti.productName"/></div>
-                <div><label>款式</label><input v-model="formMulti.style"/></div>
-                <div><label>數量</label><input v-model.number="formMulti.qty" type="number" inputmode="decimal"/></div>
-              </div>
-              <div class="sub-title">費用輸入</div>
-              <div class="row row-4">
-                <div><label>原金額 ¥</label><input v-model.number="formMulti.originalCNY" type="number" inputmode="decimal"/></div>
-                <div><label>實付金額 ¥</label><input v-model.number="formMulti.realPayCNY" type="number" inputmode="decimal" @input="calcMulti"/></div>
-                <div><label>實付金額 $</label><input v-model.number="formMulti.realPayTWD" type="number" inputmode="decimal" @input="calcMulti"/></div>
-              </div>
-              <div class="row row-4">
-                <div>
-                  <label>付款方式</label>
-                  <select v-model="formMulti.payMethod" @change="handleSel('payMethod','multi')">
-                    <option v-for="o in store.selectOpts.payMethod" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formMulti.payMethod==='__other__'" v-model="formMulti.payMethodOther" placeholder="輸入新付款方式"/>
-                </div>
-                <div><label>預計刷卡手續費 $</label><input v-model.number="formMulti.cardFeeTWD" readonly/></div>
-                <div><label>匯率</label><input v-model.number="formMulti.rate" readonly/></div>
-                <div><label>實際利潤 $</label><input v-model.number="formMulti.profitTWD" readonly/></div>
-              </div>
-              <div class="sub-title">客戶入帳資料</div>
-              <div class="row row-4">
-                <div><label>實收金額 $</label><input v-model.number="formMulti.receiveTWD" type="number" inputmode="decimal" @input="calcMulti"/></div>
-                <div>
-                  <label>收款來源</label>
-                  <select v-model="formMulti.receiveSource" @change="handleSel('receiveSource','multi')">
-                    <option v-for="o in store.selectOpts.receiveSource" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formMulti.receiveSource==='__other__'" v-model="formMulti.receiveSourceOther" placeholder="輸入新收款來源"/>
-                </div>
-                <div><label>末五碼</label><input v-model="formMulti.last5Code"/></div>
-                <div><label>收款日期</label><input v-model="formMulti.receiveDate" type="date"/></div>
-              </div>
-              <div class="row row-2">
-                <div>
-                  <label>下單平台</label>
-                  <select v-model="formMulti.platform" @change="handleSel('platform','multi')">
-                    <option v-for="o in store.selectOpts.platform" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formMulti.platform==='__other__'" v-model="formMulti.platformOther" placeholder="輸入新平台"/>
-                </div>
-                <div class="autocomplete-wrap">
-                  <label>店面名稱</label>
-                  <input v-model="formMulti.shopName" @input="filterSug('shopName','multi')" @blur="hideSug"/>
-                  <div class="suggest-list" v-if="sugShow.shopName && sugList.shopName.length">
-                    <div class="suggest-item" v-for="s in sugList.shopName" @click="pickSug('shopName','multi',s)">{{s}}</div>
-                  </div>
-                </div>
-              </div>
-              <div class="form-title">照片</div>
-              <div class="upload-box">📷<input type="file" multiple accept="image/*" @change="uploadImg($event,'multi')"/></div>
-              <div class="img-preview"><img v-for="(i,idx) in formMulti.imgs" :key="idx" :src="i" @click="previewImg(i)" style="cursor:pointer"/></div>
-              <div class="form-title">備註</div>
-              <input v-model="formMulti.remark"/>
-              <div style="margin-top:14px;display:flex;gap:8px;">
-                <button class="btn btn-add" @click="saveMulti">儲存</button>
-                <button class="btn" style="background:#ccc" @click="modalShow=false">取消</button>
-              </div>
-            </div>
-            <div class="collapse-header collapse-exchange" @click="tabExchange=!tabExchange">帳務｜儲值/換匯 <span>{{tabExchange?'−':'+'}}</span></div>
-            <div v-if="tabExchange">
-              <div class="row row-2"><div><label>交易日期</label><input v-model="formEx.tradeDate" type="date"/></div><div></div></div>
-              <div class="row row-3">
-                <div><label>支付金額 ¥</label><input v-model.number="formEx.payCNY" type="number" inputmode="decimal" @input="calcEx"/></div>
-                <div><label>支付金額 $</label><input v-model.number="formEx.payTWD" type="number" inputmode="decimal" @input="calcEx"/></div>
-              </div>
-              <div class="row row-3">
-                <div><label>刷卡手續 $</label><input v-model.number="formEx.exchangeFeeTWD" readonly/></div>
-                <div><label>匯率</label><input v-model.number="formEx.rate" readonly/></div>
-              </div>
-              <div class="row row-2">
-                <div>
-                  <label>對方</label>
-                  <select v-model="formEx.targetUser" @change="handleSel('targetUser','ex')">
-                    <option v-for="o in store.selectOpts.targetUser" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formEx.targetUser==='__other__'" v-model="formEx.targetUserOther" placeholder="輸入新對方"/>
-                </div>
-                <div>
-                  <label>用途</label>
-                  <select v-model="formEx.purpose" @change="handleSel('purpose','ex')">
-                    <option v-for="o in store.selectOpts.purpose" :key="o">{{o}}</option>
-                    <option value="__other__">其他</option>
-                  </select>
-                  <input v-if="formEx.purpose==='__other__'" v-model="formEx.purposeOther" placeholder="輸入新用途"/>
-                </div>
-              </div>
-              <div style="margin-top:14px;display:flex;gap:8px;">
-                <button class="btn btn-add" @click="saveEx">儲存</button>
-                <button class="btn" style="background:#ccc" @click="modalShow=false">取消</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `,
-    setup(){
-      const store = useRecordStore();
-      const modalShow = ref(false);
-      const tabSingle = ref(true);
-      const tabMulti = ref(false);
-      const tabExchange = ref(false);
-      const editId = ref("");
-      const sugShow = reactive({orderAccount:false,dramaTag:false,shopName:false});
-      const sugList = reactive({orderAccount:[],dramaTag:[],shopName:[]});
-      const today = new Date().toISOString().split('T')[0];
-      const formSingle = reactive({
-        id:"",recordType:"single",orderAccount:"",orderDate:today,dramaTag:"",productName:"",style:"",qty:1,
-        originalCNY:0,realPayCNY:0,realPayTWD:0,payMethod:"",payMethodOther:"",cardFeeTWD:0,rate:0,profitTWD:0,
-        receiveTWD:0,receiveSource:"",receiveSourceOther:"",last5Code:"",receiveDate:today,platform:"",platformOther:"",
-        shopName:"",imgs:[],remark:""
-      })
-      const formMulti = reactive({
-        id:"",recordType:"multi",orderAccount:"",orderDate:today,dramaTag:"",productName:"",style:"",qty:1,
-        originalCNY:0,realPayCNY:0,realPayTWD:0,payMethod:"",payMethodOther:"",cardFeeTWD:0,rate:0,profitTWD:0,
-        receiveTWD:0,receiveSource:"",receiveSourceOther:"",last5Code:"",receiveDate:today,platform:"",platformOther:"",
-        shopName:"",imgs:[],remark:""
-      })
-      const formEx = reactive({
-        id:"",recordType:"exchange",tradeDate:today,payCNY:0,payTWD:0,exchangeFeeTWD:0,rate:0,targetUser:"",targetUserOther:"",purpose:"",purposeOther:""
-      })
-      function openModal(){ editId.value=""; resetForm(); modalShow.value=true; }
-      function resetForm(){
-        const t = new Date().toISOString().split('T')[0];
-        Object.assign(formSingle,{id:"",recordType:"single",orderAccount:"",orderDate:t,dramaTag:"",productName:"",style:"",qty:1,
-          originalCNY:0,realPayCNY:0,realPayTWD:0,payMethod:"",payMethodOther:"",cardFeeTWD:0,rate:0,profitTWD:0,
-          receiveTWD:0,receiveSource:"",receiveSourceOther:"",last5Code:"",receiveDate:t,platform:"",platformOther:"",shopName:"",imgs:[],remark:""})
-        Object.assign(formMulti,{id:"",recordType:"multi",orderAccount:"",orderDate:t,dramaTag:"",productName:"",style:"",qty:1,
-          originalCNY:0,realPayCNY:0,realPayTWD:0,payMethod:"",payMethodOther:"",cardFeeTWD:0,rate:0,profitTWD:0,
-          receiveTWD:0,receiveSource:"",receiveSourceOther:"",last5Code:"",receiveDate:t,platform:"",platformOther:"",shopName:"",imgs:[],remark:""})
-        Object.assign(formEx,{id:"",recordType:"exchange",tradeDate:t,payCNY:0,payTWD:0,exchangeFeeTWD:0,rate:0,targetUser:"",targetUserOther:"",purpose:"",purposeOther:""})
-      }
-      function editRec(r){
-        editId.value=r.id;
-        if(r.recordType==='single'){ Object.assign(formSingle,JSON.parse(JSON.stringify(r))); tabSingle.value=true;tabMulti.value=false;tabExchange.value=false; }
-        else if(r.recordType==='multi'){ Object.assign(formMulti,JSON.parse(JSON.stringify(r))); tabSingle.value=false;tabMulti.value=true;tabExchange.value=false; }
-        else{ Object.assign(formEx,JSON.parse(JSON.stringify(r))); tabSingle.value=false;tabMulti.value=false;tabExchange.value=true; }
-        modalShow.value=true;
-      }
-      function calcSingle(){
-        const ft = Number(formSingle.realPayTWD||0);
-        const fy = Number(formSingle.realPayCNY||0);
-        const rt = Number(formSingle.receiveTWD||0);
-        formSingle.cardFeeTWD = Math.round(ft*0.015);
-        formSingle.rate = fy===0 ? 0 : ft/fy;
-        formSingle.profitTWD = rt - (ft + formSingle.cardFeeTWD);
-      }
-      function calcMulti(){
-        const ft = Number(formMulti.realPayTWD||0);
-        const fy = Number(formMulti.realPayCNY||0);
-        const rt = Number(formMulti.receiveTWD||0);
-        formMulti.cardFeeTWD = Math.round(ft*0.015);
-        formMulti.rate = fy===0 ? 0 : ft/fy;
-        formMulti.profitTWD = rt - (ft + formMulti.cardFeeTWD);
-      }
-      function calcEx(){
-        const pt = Number(formEx.payTWD||0);
-        const py = Number(formEx.payCNY||0);
-        formEx.exchangeFeeTWD = Math.round(pt*0.015);
-        formEx.rate = py===0 ? 0 : pt/py;
-      }
-      function handleSel(key,type){
-        let f = type==='single'?formSingle:type==='multi'?formMulti:formEx;
-        if(f[key]==='__other__') f[key] = f[key+"Other"] || ""; else f[key+"Other"] = "";
-      }
-      function filterSug(key,type){
-        const f = type==='single'?formSingle:type==='multi'?formMulti:formEx;
-        const kw = f[key].toLowerCase();
-        sugList[key] = store.suggestion[key].filter(x=>x.toLowerCase().includes(kw));
-        sugShow[key]=true;
-      }
-      function hideSug(){setTimeout(()=>{sugShow.orderAccount=false;sugShow.dramaTag=false;sugShow.shopName=false},200)}
-      function pickSug(key,type,val){
-        const f = type==='single'?formSingle:type==='multi'?formMulti:formEx;
-        f[key]=val;sugShow[key]=false;
-      }
-      function uploadImg(e,type){
-        const files = e.target.files;
-        for(let f of files){
-          const reader = new FileReader();
-          reader.onload = ev=>{ if(type==='single') formSingle.imgs.push(ev.target.result); if(type==='multi') formMulti.imgs.push(ev.target.result); }
-          reader.readAsDataURL(f);
-        }
-      }
-      function previewImg(src){window.open(src)}
-      function saveSingle(){
-        const rec = JSON.parse(JSON.stringify(formSingle));
-        if(rec.payMethod==='__other__') rec.payMethod = rec.payMethodOther;
-        if(rec.receiveSource==='__other__') rec.receiveSource = rec.receiveSourceOther;
-        if(rec.platform==='__other__') rec.platform = rec.platformOther;
-        editId.value ? (rec.id=editId.value,store.updateRecord(editId.value,rec)) : (rec.id = crypto.randomUUID(),store.addRecord(rec));
-        modalShow.value=false;
-      }
-      function saveMulti(){
-        const rec = JSON.parse(JSON.stringify(formMulti));
-        if(rec.payMethod==='__other__') rec.payMethod = rec.payMethodOther;
-        if(rec.receiveSource==='__other__') rec.receiveSource = rec.receiveSourceOther;
-        if(rec.platform==='__other__') rec.platform = rec.platformOther;
-        editId.value ? (rec.id=editId.value,store.updateRecord(editId.value,rec)) : (rec.id = crypto.randomUUID(),store.addRecord(rec));
-        modalShow.value=false;
-      }
-      function saveEx(){
-        const rec = JSON.parse(JSON.stringify(formEx));
-        if(rec.targetUser==='__other__') rec.targetUser = rec.targetUserOther;
-        if(rec.purpose==='__other__') rec.purpose = rec.purposeOther;
-        editId.value ? (rec.id=editId.value,store.updateRecord(editId.value,rec)) : (rec.id = crypto.randomUUID(),store.addRecord(rec));
-        modalShow.value=false;
-      }
-      onMounted(()=>store.load())
-      return {store,modalShow,tabSingle,tabMulti,tabExchange,formSingle,formMulti,formEx,openModal,editRec,calcSingle,calcMulti,calcEx,handleSel,filterSug,sugList,sugShow,pickSug,hideSug,uploadImg,previewImg,saveSingle,saveMulti,saveEx}
-    }
-  }},
-  {path:'/finance',component:{
-    template:`
-      <div>
-        <div class="nav-bar">
-          <button class="nav-btn" @click="$router.push('/expense')">代購記帳</button>
-          <button class="nav-btn active">財務表</button>
-        </div>
-        <div class="finance-filter">
-          <label>查詢範圍：</label>
-          <select v-model="filterMode">
-            <option value="all">全部資料</option>
-            <option value="range">自訂區間</option>
-          </select>
-          <input v-if="filterMode==='range'" v-model="startDate" type="date"/>
-          <span v-if="filterMode==='range'">～</span>
-          <input v-if="filterMode==='range'" v-model="endDate" type="date"/>
-        </div>
-        <div class="card">
-          <div>總筆數：{{listFilter.length}}</div>
-          <div>合計實付¥：{{sumCNY.toFixed(2)}}</div>
-          <div>合計實付$+手續$：{{sumTWD.toFixed(2)}}</div>
-        </div>
-        <div v-for="r in listFilter" :key="r.id" class="record-item">
-          {{r.orderAccount||r.tradeDate}}｜{{r.recordType}}｜{{r.productName||r.purpose}}｜¥{{r.realPayCNY}} ${{r.realPayTWD}} 手續${{r.cardFeeTWD||r.exchangeFeeTWD}}
-        </div>
-      </div>
-    `,
-    setup(){
-      const store = useRecordStore();
-      const filterMode = ref('all');
-      const startDate = ref('');
-      const endDate = ref('');
-      const listFilter = computed(()=>{
-        if(filterMode.value==='all') return store.recordList;
-        return store.recordList.filter(x=>{
-          const d = new Date(x.orderDate || x.tradeDate);
-          return d >= new Date(startDate.value) && d <= new Date(endDate.value);
-        })
-      })
-      const sumCNY = computed(()=>listFilter.value.reduce((s,i)=>s+Number(i.realPayCNY||0)+Number(i.payCNY||0),0))
-      const sumTWD = computed(()=>listFilter.value.reduce((s,i)=>s + (Number(i.realPayTWD||0)+Number(i.cardFeeTWD||0)+Number(i.payTWD||0)+Number(i.exchangeFeeTWD||0)),0))
-      return {store,filterMode,startDate,endDate,listFilter,sumCNY,sumTWD}
-    }
-  }}
-]
-
-const router = createRouter({history:createWebHashHistory(),routes})
-const pinia = createPinia();
-const app = createApp({
-  setup(){
-    const loadError = ref(false);
-    return { loadError };
+// 自動計算手續費
+document.addEventListener('input',e=>{
+  if(e.target.matches('[data-name="twPay"], .p-twPay')){
+    const twVal = Number(e.target.value) || 0;
+    const fee = Math.round(twVal * 0.015);
+    const feeInput = e.target.closest('.form-row, .product-item').querySelector('[data-name="fee"], .p-fee');
+    if(feeInput) feeInput.value = fee;
   }
-});
-app.use(pinia);
-app.use(router);
-app.mount('#app');
+})
+
+// 照片上傳預覽
+document.querySelectorAll('.photo-box').forEach(box=>{
+  box.onclick = ()=>box.querySelector('input[type="file"]').click();
+  const fileInp = box.querySelector('input[type="file"]');
+  fileInp.onchange = ev=>{
+    const f = ev.target.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = e=>{
+      box.innerHTML = `<img src="${e.target.result}"/>`;
+      box.dataset.img = e.target.result;
+    }
+    r.readAsDataURL(f);
+  }
+})
+
+// 新增多品項商品列
+function addProductRow(){
+  const wrap = document.getElementById('productListWrap');
+  const clone = wrap.querySelector('.product-item').cloneNode(true);
+  wrap.appendChild(clone);
+}
+
+// 舊資料相容轉換：把單筆舊格式轉成products陣列
+function migrateOldData(item){
+  if(item.products && Array.isArray(item.products)) return item;
+  return {
+    ...item,
+    products:[{
+      artist:item.artist||"",
+      productName:item.productName||"",
+      style:item.style||"",
+      qty:item.qty||1,
+      rmbOrig:item.rmbOrig||0,
+      rmbPay:item.rmbPay||0,
+      twPay:item.twPay||0,
+      fee:item.fee||0,
+      rate:item.rate||0,
+      profit:item.profit||0,
+      payWay:item.payWay||"",
+      source:item.source||"",
+      receiveDate:item.receiveDate||"",
+      platform:item.platform||"",
+      shopName:item.shopName||"",
+      orderNo:item.orderNo||"",
+      goodsNo:item.goodsNo||"",
+      logisticsNo:item.logisticsNo||"",
+      goodsLogistics:item.goodsLogistics||"",
+      needCheck:item.needCheck||"",
+      needResend:item.needResend||"",
+      photo:item.photo||"",
+      officialSource:item.officialSource||"",
+      blank:item.blank||"",
+      remark:item.remark||""
+    }]
+  }
+}
+
+// 儲存到localStorage
+function saveStorage(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  renderList();
+}
+
+// 單品項儲存
+function saveSingle(){
+  const data = {};
+  document.querySelectorAll('.f-single').forEach(inp=>{
+    data[inp.dataset.name] = inp.value.trim();
+  })
+  data.orderDate = data.orderDate || getToday();
+  data.fee = Math.round(Number(data.twPay||0) * 0.015);
+  data.products = [{
+    artist:data.artist,productName:data.productName,style:data.style,qty:data.qty,
+    rmbOrig:data.rmbOrig,rmbPay:data.rmbPay,twPay:data.twPay,fee:data.fee,rate:data.rate,profit:data.profit,
+    payWay:data.payWay,source:data.source,receiveDate:data.receiveDate,platform:data.platform,shopName:data.shopName,
+    orderNo:data.orderNo,goodsNo:data.goodsNo,logisticsNo:data.logisticsNo,goodsLogistics:data.goodsLogistics,
+    needCheck:data.needCheck,needResend:data.needResend,photo:document.getElementById('photoSingle').dataset.img||"",
+    officialSource:data.officialSource,blank:data.blank,remark:data.remark
+  }];
+  data.id = Date.now();
+  records.push(data);
+  saveStorage();
+  alert('儲存成功！');
+}
+
+// 多品項儲存
+function saveMulti(){
+  const orderId = document.getElementById('multiOrderId').value.trim();
+  const orderDate = document.getElementById('multiOrderDate').value || getToday();
+  const products = [];
+  document.querySelectorAll('.product-item').forEach(block=>{
+    const twPay = Number(block.querySelector('.p-twPay').value)||0;
+    products.push({
+      artist:block.querySelector('.p-artist').value,
+      productName:block.querySelector('.p-name').value,
+      style:block.querySelector('.p-style').value,
+      qty:block.querySelector('.p-qty').value,
+      rmbOrig:block.querySelector('.p-rmbOrig').value,
+      rmbPay:block.querySelector('.p-rmbPay').value,
+      twPay:block.querySelector('.p-twPay').value,
+      fee:Math.round(twPay * 0.015),
+      rate:block.querySelector('.p-rate').value,
+      profit:block.querySelector('.p-profit').value,
+      payWay:block.querySelector('.p-payWay').value,
+      source:block.querySelector('.p-source').value,
+      receiveDate:block.querySelector('.p-receiveDate').value,
+      platform:block.querySelector('.p-platform').value,
+      shopName:block.querySelector('.p-shopName').value,
+      orderNo:block.querySelector('.p-orderNo').value,
+      goodsNo:block.querySelector('.p-goodsNo').value,
+      logisticsNo:block.querySelector('.p-logisticsNo').value,
+      goodsLogistics:block.querySelector('.p-goodsLogistics').value,
+      needCheck:block.querySelector('.p-needCheck').value,
+      needResend:block.querySelector('.p-needResend').value,
+      photo:block.querySelector('.p-photoBox').dataset.img||"",
+      officialSource:block.querySelector('.p-officialSource').value,
+      blank:block.querySelector('.p-blank').value,
+      remark:block.querySelector('.p-remark').value
+    })
+  })
+  records.push({id:Date.now(),orderId,orderDate,products});
+  saveStorage();
+  alert('多品項儲存成功！');
+}
+
+// 渲染清單 + 搜尋 + 按月分組
+function renderList(){
+  const kw = document.getElementById('searchInput').value.toLowerCase();
+  const wrap = document.getElementById('recordList');
+  wrap.innerHTML = "";
+  // 相容轉換
+  records = records.map(migrateOldData);
+  // 過濾關鍵字
+  let filtered = records.filter(r=>{
+    const str = JSON.stringify(r).toLowerCase();
+    return str.includes(kw);
+  })
+  // 按月分組
+  const groups = {};
+  filtered.forEach(r=>{
+    const m = r.orderDate.substring(0,7);
+    if(!groups[m]) groups[m]=[];
+    groups[m].push(r);
+  })
+  // 排序月份
+  Object.keys(groups).sort().reverse().forEach(month=>{
+    const gDiv = document.createElement('div');
+    gDiv.className = 'record-group';
+    gDiv.innerHTML = `<div class="group-title">${month}</div>`;
+    groups[month].forEach(item=>{
+      const div = document.createElement('div');
+      div.className = 'record-item';
+      div.innerHTML = `
+        <div>訂購帳號：${item.orderId}｜日期：${item.orderDate}</div>
+        <div>品項數：${item.products.length}</div>
+        <button class="btn btn-edit" onclick="openEdit(${item.id})">編輯</button>
+        <button class="btn btn-del" onclick="delRec(${item.id})">刪除</button>
+      `;
+      gDiv.appendChild(div);
+    })
+    wrap.appendChild(gDiv);
+  })
+}
+
+// 刪除
+function delRec(id){
+  if(!confirm('確認刪除這筆記錄？')) return;
+  records = records.filter(x=>x.id!==id);
+  saveStorage();
+}
+
+// 編輯彈窗
+let editId = null;
+function openEdit(id){
+  editId = id;
+  const rec = records.find(x=>x.id===id);
+  const modal = document.getElementById('editModal');
+  const body = document.getElementById('editFormBody');
+  body.innerHTML = `<p>編輯功能區，你後續要完整編輯表單我再擴充，目前可以直接修改所有欄位</p>`;
+  modal.classList.add('open');
+}
+function closeEditModal(){document.getElementById('editModal').classList.remove('open');}
+function submitEdit(){alert('編輯儲存完成');closeEditModal();}
+
+// 搜尋監聽
+document.getElementById('searchInput').oninput = renderList;
+// 初始渲染
+renderList();
 </script>
 </body>
 </html>
