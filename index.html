@@ -464,6 +464,7 @@ th{background:var(--main-purple);}
 </div>
 
 <script>
+// ✅ 直接套用你新版Library授權網址
 const API_URL = "https://script.google.com/macros/library/d/1uoUxA--C0OoZiySBcZEKrSEQnLieKHg2_LYSDfV-u57yxxZjdRyvNBbt/5"
 function getLocalToday(){
   const d = new Date();
@@ -605,6 +606,7 @@ function showSuggest(key, val){
   wrap.style.display="block";
 }
 
+// 公式：預計刷卡手續費 = 實付台幣 ×0.015，四捨五入整數
 function calcSingle(){
   const payTwd = Number(document.getElementById("payTwdSingle").value||0);
   const payCny = Number(document.getElementById("payCnySingle").value||0);
@@ -966,65 +968,4 @@ function renderItems(list){
           <tr>
             <td data-label="收款來源">${it.recvSource||"-"}</td>
             <td data-label="末五碼">${it.last5||"-"}</td>
-            <td data-label="收款日">${it.recvDate||"-"}</td>
-            <td data-label="平台">${it.platform||"-"}</td>
-          </tr>
-          <tr>
-            <td data-label="店面">${it.shopName||"-"}</td>
-            <td data-label="備註">${it.remark||"-"}</td>
-            <td></td>
-            <td></td>
-          </tr>
-        </table>
-        ${it.photos && it.photos.length>0 ? `<div class="photo-preview">${it.photos.map(x=>`<img src="${x}">`).join("")}</div>`:""}
-      `
-    }
-    wrap.appendChild(card);
-  })
-}
-function renderAll(){ let list = filterByKeyword([...dataList]); calcSum(list); renderItems(list); }
-function renderRange(){
-  const s = document.getElementById("startDate").value;
-  const e = document.getElementById("endDate").value;
-  if(!s || !e) return alert("請選起訖日期");
-  let filtered = dataList.filter(x=>{
-    const d = x.type==="exch" ? x.exchDate : x.orderDate;
-    return d >= s && d <= e;
-  })
-  filtered = filterByKeyword(filtered); calcSum(filtered); renderItems(filtered);
-}
-
-window.onload = async ()=>{
-  const today = getLocalToday();
-  fillSelect("recvSourceSingle");
-  fillSelect("recvSourceMulti");
-  fillSelect("platformSingle");
-  fillSelect("platformMulti");
-  fillSelect("exchTarget");
-  fillSelect("exchPurpose");
-  await loadFromSheet();
-  blockState.single = false; blockState.multi = false; blockState.exch = false;
-  document.getElementById("panel-single").classList.remove("open");
-  document.getElementById("panel-multi").classList.remove("open");
-  document.getElementById("panel-exch").classList.remove("open");
-  document.getElementById("arrow-single").textContent="▼";
-  document.getElementById("arrow-multi").textContent="▼";
-  document.getElementById("arrow-exch").textContent="▼";
-  renderPhotoPreview("single"); renderPhotoPreview("multi");
-  multiRows = [{artist:"", name:"", style:"", qty:""}]; renderMultiRows();
-
-  document.getElementById("orderDateSingle").value = today;
-  document.getElementById("recvDateSingle").value = today;
-  document.getElementById("orderDateMulti").value = today;
-  document.getElementById("recvDateMulti").value = today;
-  document.getElementById("exchDate").value = today;
-
-  document.addEventListener("click",(ev)=>{
-    if(!ev.target.closest(".auto-suggest")){
-      document.querySelectorAll(".suggest-list").forEach(x=>x.style.display="none");
-    }
-  })
-}
-</script>
-</body>
-</html>
+            <td data-label="收款日">${it.recvDate||"-
