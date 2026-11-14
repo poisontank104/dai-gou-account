@@ -464,9 +464,7 @@ th{background:var(--main-purple);}
 </div>
 
 <script>
-// ===================== 這裡填入你的Apps Script網址 =====================
 const API_URL = "https://script.google.com/macros/s/AKfycbwi037s62MdXX8Wz4OX0D28FV3QilrE7KfmySdh4XuYaaz-SGdfFC-vagnwIMB50aAF/exec";
-// ======================================================================
 
 function getLocalToday(){
   const d = new Date();
@@ -518,7 +516,6 @@ async function loadFromSheet(){
     const json = await res.json();
     if(json.ok){
       dataList = json.data;
-      // 收集歷史選項
       dataList.forEach(it=>{
         if(it.orderNo) history.orderNo.push(it.orderNo);
         if(it.artist) history.artist.push(it.artist);
@@ -541,7 +538,8 @@ async function loadFromSheet(){
 async function saveToSheet(payload){
   const res = await fetch(API_URL,{
     method:"POST",
-    body:JSON.stringify(payload)
+    body:JSON.stringify(payload),
+    headers:{"Content-Type":"text/plain"}
   });
   const json = await res.json();
   if(!json.ok) alert("儲存失敗："+json.msg);
