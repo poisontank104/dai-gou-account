@@ -428,7 +428,7 @@ th{background:var(--main-purple);}
 </div>
 
 <script>
-// 抓台灣本地時區今日日期，開頁直接預設填入
+// 抓台灣本地時區今日日期
 function getLocalToday(){
   const d = new Date();
   const y = d.getFullYear();
@@ -474,6 +474,7 @@ let data = {
 let searchKeyword = "";
 let multiRows = [];
 let photoCache = { single:[], multi:[] };
+let currentEditIndex = -1;
 
 function loadData(){
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -666,6 +667,7 @@ function renderPhotoPreview(type){
 }
 
 function saveSingle(){
+  const editIdx = Number(document.getElementById("editIdSingle").value);
   const obj = {
     type: "normal",
     orderDate:document.getElementById("orderDateSingle").value,
@@ -695,10 +697,15 @@ function saveSingle(){
   pushHistory("shopName", obj.shopName);
   pushHistory("recvSource", obj.recvSource);
   pushHistory("platform", obj.platform);
-  data.products.push(obj);
+  if(editIdx >=0){
+    data.products[editIdx] = obj;
+  }else{
+    data.products.push(obj);
+  }
   saveStorage(); clearSingle(); renderAll();
 }
 function clearSingle(){
+  document.getElementById("editIdSingle").value = "-1";
   document.getElementById("orderNoSingle").value="";
   document.getElementById("artistSingle").value="";
   document.getElementById("prodNameSingle").value="";
@@ -717,6 +724,7 @@ function clearSingle(){
   calcSingle();
 }
 function saveMulti(){
+  const editIdx = Number(document.getElementById("editIdMulti").value);
   const obj = {
     type: "multi",
     orderDate:document.getElementById("orderDateMulti").value,
@@ -745,10 +753,15 @@ function saveMulti(){
   pushHistory("shopName", obj.shopName);
   pushHistory("recvSource", obj.recvSource);
   pushHistory("platform", obj.platform);
-  data.products.push(obj);
+  if(editIdx >=0){
+    data.products[editIdx] = obj;
+  }else{
+    data.products.push(obj);
+  }
   saveStorage(); clearMulti(); renderAll();
 }
 function clearMulti(){
+  document.getElementById("editIdMulti").value = "-1";
   document.getElementById("orderNoMulti").value="";
   document.getElementById("oriCnyMulti").value="";
   document.getElementById("payCnyMulti").value="";
@@ -765,6 +778,7 @@ function clearMulti(){
   calcMulti();
 }
 function saveExch(){
+  const editIdx = Number(document.getElementById("editIdExch").value);
   const obj = {
     type:"exch",
     exchDate:document.getElementById("exchDate").value,
@@ -777,15 +791,84 @@ function saveExch(){
   }
   pushHistory("exchTarget", obj.exchTarget);
   pushHistory("exchPurpose", obj.exchPurpose);
-  data.products.push(obj);
+  if(editIdx >=0){
+    data.products[editIdx] = obj;
+  }else{
+    data.products.push(obj);
+  }
   saveStorage(); clearExch(); renderAll();
 }
 function clearExch(){
+  document.getElementById("editIdExch").value = "-1";
   document.getElementById("exchCny").value="";
   document.getElementById("exchTwd").value="";
   const today = getLocalToday();
   document.getElementById("exchDate").value = today;
   calcExch();
+}
+
+// 編輯載入
+function editItem(idx){
+  currentEditIndex = idx;
+  const item = data.products[idx];
+  if(item.type === "normal" || item.type === "migrated"){
+    toggleBlock('single');
+    document.getElementById("editIdSingle").value = idx;
+    document.getElementById("orderDateSingle").value = item.orderDate || "";
+    document.getElementById("orderNoSingle").value = item.orderNo || "";
+    document.getElementById("artistSingle").value = item.artist || "";
+    document.getElementById("prodNameSingle").value = item.prodName || "";
+    document.getElementById("styleSingle").value = item.style || "";
+    document.getElementById("qtySingle").value = item.qty || "";
+    document.getElementById("oriCnySingle").value = item.oriCny || "";
+    document.getElementById("payCnySingle").value = item.payCny || "";
+    document.getElementById("payTwdSingle").value = item.payTwd || "";
+    document.getElementById("recvTwdSingle").value = item.recvTwd || "";
+    document.getElementById("last5Single").value = item.last5 || "";
+    document.getElementById("recvSourceSingle").value = item.recvSource || "";
+    document.getElementById("recvDateSingle").value = item.recvDate || "";
+    document.getElementById("platformSingle").value = item.platform || "";
+    document.getElementById("shopNameSingle").value = item.shopName || "";
+    document.getElementById("remarkSingle").value = item.remark || "";
+    photoCache.single = Array.isArray(item.photos) ? [...item.photos] : [];
+    renderPhotoPreview("single");
+    calcSingle();
+  }else if(item.type === "multi"){
+    toggleBlock('multi');
+    document.getElementById("editIdMulti").value = idx;
+    document.getElementById("orderDateMulti").value = item.orderDate || "";
+    document.getElementById("orderNoMulti").value = item.orderNo || "";
+    multiRows = Array.isArray(item.multiItems) ? JSON.parse(JSON.stringify(item.multiItems)) : [{artist:"",name:"",style:"",qty:""}];
+    renderMultiRows();
+    document.getElementById("oriCnyMulti").value = item.oriCny || "";
+    document.getElementById("payCnyMulti").value = item.payCny || "";
+    document.getElementById("payTwdMulti").value = item.payTwd || "";
+    document.getElementById("recvTwdMulti").value = item.recvTwd || "";
+    document.getElementById("last5Multi").value = item.last5 || "";
+    document.getElementById("recvSourceMulti").value = item.recvSource || "";
+    document.getElementById("recvDateMulti").value = item.recvDate || "";
+    document.getElementById("platformMulti").value = item.platform || "";
+    document.getElementById("shopNameMulti").value = item.shopName || "";
+    document.getElementById("remarkMulti").value = item.remark || "";
+    photoCache.multi = Array.isArray(item.photos) ? [...item.photos] : [];
+    renderPhotoPreview("multi");
+    calcMulti();
+  }else if(item.type === "exch"){
+    toggleBlock('exch');
+    document.getElementById("editIdExch").value = idx;
+    document.getElementById("exchDate").value = item.exchDate || "";
+    document.getElementById("exchCny").value = item.exchCny || "";
+    document.getElementById("exchTwd").value = item.exchTwd || "";
+    document.getElementById("exchTarget").value = item.exchTarget || "";
+    document.getElementById("exchPurpose").value = item.exchPurpose || "";
+    calcExch();
+  }
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function delItem(idx){
+  if(!confirm("確認刪除這筆帳務？")) return;
+  data.products.splice(idx,1);
+  saveStorage(); renderAll();
 }
 
 function doSearch(){ searchKeyword = document.getElementById("searchInput").value.trim().toLowerCase(); renderAll(); }
@@ -919,8 +1002,6 @@ function renderRange(){
   })
   filtered = filterByKeyword(filtered); calcSum(filtered); renderItems(filtered);
 }
-function editItem(idx){ alert("這版先簡化：編輯功能暫時移除，後續再加，舊資料不會不見！"); }
-function delItem(idx){ if(!confirm("確認刪除這筆帳務？")) return; data.products.splice(idx,1); saveStorage(); renderAll(); }
 
 window.onload = ()=>{
   const today = getLocalToday();
@@ -935,7 +1016,7 @@ window.onload = ()=>{
   renderPhotoPreview("single"); renderPhotoPreview("multi");
   multiRows = [{artist:"", name:"", style:"", qty:""}]; renderMultiRows();
 
-  // 【開頁直接預設填入今日日期】
+  // 開頁預設今日
   document.getElementById("orderDateSingle").value = today;
   document.getElementById("recvDateSingle").value = today;
   document.getElementById("orderDateMulti").value = today;
