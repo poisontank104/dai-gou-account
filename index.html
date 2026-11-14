@@ -60,6 +60,10 @@ button{padding:12px 10px;border:none;border-radius:10px;cursor:pointer;font-size
 .row-4col{grid-template-columns:1.2fr 2fr 0.8fr 0.8fr;}
 .row-3col{grid-template-columns:1fr 1fr 1fr;}
 .row-4short{grid-template-columns:1fr 1fr 1fr 1fr;}
+/* 單品項專用新分類 row，電腦維持橫排 */
+.row-single-1{grid-template-columns:1fr;}
+.row-single-2{grid-template-columns:1fr 1fr;}
+.row-single-3{grid-template-columns:1fr 1fr 1fr;}
 label{font-size:15px;display:block;margin-bottom:5px;font-weight:500;}
 input,select{width:100%;padding:11px;border:1px solid var(--border);border-radius:8px;font-size:16px;min-height:44px;}
 input[type="number"]{inputmode:decimal;}
@@ -124,9 +128,15 @@ th{background:var(--main-purple);}
   padding:9px;
 }
 
-/* ========== 手機優化重點 ========== */
+/* ========== 手機優化 ========== */
 @media(max-width:600px){
   .stat-row{grid-template-columns:1fr;}
+  /* 只有單品項表單使用你指定的手機排版 */
+  #formSingle .row-single-1{grid-template-columns:1fr;}
+  #formSingle .row-single-2{grid-template-columns:1fr 1fr;}
+  #formSingle .row-single-3{grid-template-columns:1fr 1fr 1fr;}
+
+  /* 多品項維持原本的手機單欄，不動 */
   .form-row,
   .multi-item-row{
     grid-template-columns:1fr !important;
@@ -161,7 +171,7 @@ th{background:var(--main-purple);}
     </div>
   </div>
 
-  <!-- 單品項 -->
+  <!-- 單品項｜這裡重新排版成你指定順序 -->
   <div class="single-collapse">
     <div class="single-collapse-header" id="header-single" onclick="toggleBlock('single')">
       <span>新增帳務｜單品項</span>
@@ -170,27 +180,33 @@ th{background:var(--main-purple);}
     <div class="single-collapse-content" id="panel-single">
       <div id="formSingle" class="form-wrap active">
         <input type="hidden" id="editIdSingle">
-        <div class="form-row row-2col">
+        <div class="form-row row-single-1">
           <div class="auto-suggest">
             <label>訂購帳號</label>
             <input type="text" id="orderNoSingle" oninput="showSuggest('orderNo', this.value)">
             <div class="suggest-list" id="suggest-orderNo"></div>
           </div>
+        </div>
+        <div class="form-row row-single-1">
           <div>
             <label>訂購日期</label>
             <input type="date" id="orderDateSingle">
           </div>
         </div>
-        <div class="form-row row-4col">
+        <div class="form-row row-single-1">
           <div class="auto-suggest">
             <label>人劇綜</label>
             <input type="text" id="artistSingle" oninput="showSuggest('artist', this.value)">
             <div class="suggest-list" id="suggest-artist"></div>
           </div>
+        </div>
+        <div class="form-row row-single-1">
           <div>
             <label>商品名稱</label>
             <input type="text" id="prodNameSingle">
           </div>
+        </div>
+        <div class="form-row row-single-2">
           <div>
             <label>款式</label>
             <input type="text" id="styleSingle">
@@ -200,7 +216,7 @@ th{background:var(--main-purple);}
             <input type="number" id="qtySingle" min="0" step="1">
           </div>
         </div>
-        <div class="form-row row-3col">
+        <div class="form-row row-single-3">
           <div>
             <label>原金額¥</label>
             <input type="number" class="no-spin" id="oriCnySingle" step="0.01" inputmode="decimal">
@@ -214,7 +230,7 @@ th{background:var(--main-purple);}
             <input type="number" class="no-spin" id="payTwdSingle" step="0.01" inputmode="decimal" oninput="calcSingle()">
           </div>
         </div>
-        <div class="form-row row-3col">
+        <div class="form-row row-single-3">
           <div>
             <label>預計刷卡手續費$</label>
             <input type="number" id="feeTwdSingle" readonly>
@@ -228,8 +244,16 @@ th{background:var(--main-purple);}
             <input type="number" id="profitTwdSingle" readonly>
           </div>
         </div>
+
         <div class="sub-title">入賬資料</div>
-        <div class="form-row row-4short">
+
+        <div class="form-row row-single-1">
+          <div>
+            <label>收款日期</label>
+            <input type="date" id="recvDateSingle">
+          </div>
+        </div>
+        <div class="form-row row-single-3">
           <div>
             <label>實收金額$</label>
             <input type="number" class="no-spin" id="recvTwdSingle" step="0.01" inputmode="decimal" oninput="calcSingle()">
@@ -242,12 +266,8 @@ th{background:var(--main-purple);}
             <label>末五碼</label>
             <input type="text" id="last5Single">
           </div>
-          <div>
-            <label>收款日期</label>
-            <input type="date" id="recvDateSingle">
-          </div>
         </div>
-        <div class="form-row row-2col">
+        <div class="form-row row-single-2">
           <div>
             <label>下單平台</label>
             <select id="platformSingle" onchange="otherSelect(this,'platform')"></select>
@@ -258,9 +278,11 @@ th{background:var(--main-purple);}
             <div class="suggest-list" id="suggest-shopName"></div>
           </div>
         </div>
-        <div>
-          <label>備註</label>
-          <input type="text" id="remarkSingle">
+        <div class="form-row row-single-1">
+          <div>
+            <label>備註</label>
+            <input type="text" id="remarkSingle">
+          </div>
         </div>
         <div class="photo-area">
           <label>照片</label>
@@ -277,7 +299,7 @@ th{background:var(--main-purple);}
     </div>
   </div>
 
-  <!-- 多品項 -->
+  <!-- 多品項【完全沒改，維持原本】 -->
   <div class="single-collapse">
     <div class="single-collapse-header" id="header-multi" onclick="toggleBlock('multi')">
       <span>新增帳務｜多品項</span>
@@ -378,7 +400,7 @@ th{background:var(--main-purple);}
     </div>
   </div>
 
-  <!-- 儲值換匯 -->
+  <!-- 儲值換匯 維持原本 -->
   <div class="single-collapse">
     <div class="single-collapse-header" id="header-exch" onclick="toggleBlock('exch')">
       <span>新增帳務｜儲值/換匯</span>
