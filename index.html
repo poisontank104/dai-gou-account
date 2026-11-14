@@ -60,7 +60,6 @@ button{padding:12px 10px;border:none;border-radius:10px;cursor:pointer;font-size
 .row-4col{grid-template-columns:1.2fr 2fr 0.8fr 0.8fr;}
 .row-3col{grid-template-columns:1fr 1fr 1fr;}
 .row-4short{grid-template-columns:1fr 1fr 1fr 1fr;}
-/* 單品項專用新分類 row，電腦維持橫排 */
 .row-single-1{grid-template-columns:1fr;}
 .row-single-2{grid-template-columns:1fr 1fr;}
 .row-single-3{grid-template-columns:1fr 1fr 1fr;}
@@ -127,16 +126,13 @@ th{background:var(--main-purple);}
   color:white;
   padding:9px;
 }
-
-/* ========== 手機優化 ========== */
+.loading{text-align:center;padding:20px;color:#7b68a8;font-weight:bold;}
+/* ========== 手機優化：只單品項套用指定排版 ========== */
 @media(max-width:600px){
   .stat-row{grid-template-columns:1fr;}
-  /* 只有單品項表單使用你指定的手機排版 */
   #formSingle .row-single-1{grid-template-columns:1fr;}
   #formSingle .row-single-2{grid-template-columns:1fr 1fr;}
   #formSingle .row-single-3{grid-template-columns:1fr 1fr 1fr;}
-
-  /* 多品項維持原本的手機單欄，不動 */
   .form-row,
   .multi-item-row{
     grid-template-columns:1fr !important;
@@ -171,7 +167,7 @@ th{background:var(--main-purple);}
     </div>
   </div>
 
-  <!-- 單品項｜這裡重新排版成你指定順序 -->
+  <!-- 單品項 -->
   <div class="single-collapse">
     <div class="single-collapse-header" id="header-single" onclick="toggleBlock('single')">
       <span>新增帳務｜單品項</span>
@@ -299,7 +295,7 @@ th{background:var(--main-purple);}
     </div>
   </div>
 
-  <!-- 多品項【完全沒改，維持原本】 -->
+  <!-- 多品項 -->
   <div class="single-collapse">
     <div class="single-collapse-header" id="header-multi" onclick="toggleBlock('multi')">
       <span>新增帳務｜多品項</span>
@@ -400,7 +396,7 @@ th{background:var(--main-purple);}
     </div>
   </div>
 
-  <!-- 儲值換匯 維持原本 -->
+  <!-- 儲值換匯 -->
   <div class="single-collapse">
     <div class="single-collapse-header" id="header-exch" onclick="toggleBlock('exch')">
       <span>新增帳務｜儲值/換匯</span>
@@ -453,6 +449,7 @@ th{background:var(--main-purple);}
   </div>
 
   <div id="listWrap"></div>
+  <div id="loadingTip" class="loading">載入資料中...</div>
 
   <div class="filter-bar">
     <button onclick="toggleFilter()">查詢彙整資料</button>
@@ -467,7 +464,10 @@ th{background:var(--main-purple);}
 </div>
 
 <script>
-// 抓台灣本地時區今日日期
+// ===================== 這裡填入你的Apps Script網址 =====================
+const API_URL = "這裡貼你的Apps Script網頁應用程式網址";
+// ======================================================================
+
 function getLocalToday(){
   const d = new Date();
   const y = d.getFullYear();
@@ -492,80 +492,68 @@ function toggleFilter(){
   else c.classList.remove("open");
 }
 
-const STORAGE_KEY = "代购BookData";
 const BASE_RECV_SOURCE = ["中信$","郵局$","中信無卡$","台新$","台新無卡$","國泰$","台灣配$","LINE BANK","i pass money","line pay money"];
 const BASE_PLATFORM = ["淘寶","淘寶（騰訊）","淘寶（優酷）","淘寶（愛奇藝）","騰訊","優酷","愛奇藝","小芒","微店","微信（拼團呀）","微信（拼谷）","閑魚","小紅書","抖音","京東","QQ音樂","酷狗音樂","網易雲","拼多多","阿里巴巴","微博","紛玩島","大麥","百度網盤"];
 const BASE_EXCH_TARGET = ["解語花","友宜集運"];
 const BASE_EXCH_PURPOSE = ["換匯","儲值集運"];
 
-let data = {
-  products:[],
-  history:{
-    orderNo:[],
-    artist:[],
-    shopName:[],
-    recvSource:[...BASE_RECV_SOURCE],
-    platform:[...BASE_PLATFORM],
-    exchTarget:[...BASE_EXCH_TARGET],
-    exchPurpose:[...BASE_EXCH_PURPOSE]
-  }
-};
+let dataList = [];
 let searchKeyword = "";
 let multiRows = [];
 let photoCache = { single:[], multi:[] };
-let currentEditIndex = -1;
+let history = {
+  orderNo:[],
+  artist:[],
+  shopName:[],
+  recvSource:[...BASE_RECV_SOURCE],
+  platform:[...BASE_PLATFORM],
+  exchTarget:[...BASE_EXCH_TARGET],
+  exchPurpose:[...BASE_EXCH_PURPOSE]
+};
 
-function loadData(){
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if(raw){
-    try{
-      const old = JSON.parse(raw);
-      if(Array.isArray(old) && old.length>0 && !old.products){
-        data.products = old.map(item=>{
-          return {
-            type:"migrated",
-            orderDate:item.date||"",
-            orderNo:item.orderNo||"",
-            artist:item.artist||"",
-            prodName:item.name||"",
-            style:item.style||"",
-            qty:item.qty||1,
-            multiItems: null,
-            oriCny:item.oriCny||0,
-            payCny:item.cny||0,
-            payTwd:item.twd||0,
-            recvTwd:item.recvTwd||0,
-            last5:item.last5||"",
-            feeTwd:Math.round((item.twd||0)*0.015),
-            profitTwd: (item.recvTwd||0) - ((item.twd||0)+Math.round((item.twd||0)*0.015)),
-            rate: item.payCny>0 ? Number((item.twd/item.cny).toFixed(2)) : 0,
-            recvSource:item.recvSource||"",
-            recvDate:item.recvDate||"",
-            platform:item.platform||"",
-            shopName:item.shopName||"",
-            photos:item.photos||[],
-            remark:item.remark||""
-          }
-        })
-      }else if(old.products){
-        data = old;
-      }
-    }catch(e){console.error(e);}
+async function loadFromSheet(){
+  document.getElementById("loadingTip").style.display="block";
+  try{
+    const res = await fetch(`${API_URL}?action=list`);
+    const json = await res.json();
+    if(json.ok){
+      dataList = json.data;
+      // 收集歷史選項
+      dataList.forEach(it=>{
+        if(it.orderNo) history.orderNo.push(it.orderNo);
+        if(it.artist) history.artist.push(it.artist);
+        if(it.shopName) history.shopName.push(it.shopName);
+      })
+      history.orderNo = [...new Set(history.orderNo)];
+      history.artist = [...new Set(history.artist)];
+      history.shopName = [...new Set(history.shopName)];
+      renderAll();
+    }else{
+      alert("讀取失敗："+json.msg);
+    }
+  }catch(e){
+    alert("連線後端失敗，檢查API網址與部署設定");
+    console.error(e);
   }
-
-  if(!data.history.platform || data.history.platform.length === 0){
-    data.history.platform = [...BASE_PLATFORM];
-  }
-
-  fillSelect("recvSourceSingle");
-  fillSelect("recvSourceMulti");
-  fillSelect("platformSingle");
-  fillSelect("platformMulti");
-  fillSelect("exchTarget");
-  fillSelect("exchPurpose");
-  renderAll();
+  document.getElementById("loadingTip").style.display="none";
 }
-function saveStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+async function saveToSheet(payload){
+  const res = await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify(payload)
+  });
+  const json = await res.json();
+  if(!json.ok) alert("儲存失敗："+json.msg);
+  await loadFromSheet();
+  return json;
+}
+async function delFromSheet(id){
+  const res = await fetch(`${API_URL}?action=del&id=${id}`);
+  const json = await res.json();
+  if(!json.ok) alert("刪除失敗");
+  await loadFromSheet();
+}
 
 function fillSelect(id){
   const sel = document.getElementById(id);
@@ -576,10 +564,8 @@ function fillSelect(id){
   else if(id==="exchTarget") key="exchTarget";
   else if(id==="exchPurpose") key="exchPurpose";
   else return;
-
   sel.innerHTML = "";
-
-  const list = Array.isArray(data.history[key]) ? data.history[key] : [];
+  const list = Array.isArray(history[key]) ? history[key] : [];
   list.forEach(v=>{
     if(v && String(v).trim() !== ""){
       const opt = document.createElement("option");
@@ -588,34 +574,30 @@ function fillSelect(id){
       sel.appendChild(opt);
     }
   });
-
   const optOther = document.createElement("option");
   optOther.value = "_OTHER_";
   optOther.innerText = "其他";
   sel.appendChild(optOther);
 }
-
 function otherSelect(el, key){
   if(el.value === "_OTHER_"){
     const val = prompt("輸入新選項：");
     if(val && val.trim()){
       const v = val.trim();
-      if(!data.history[key]) data.history[key] = [];
-      if(!data.history[key].includes(v)) data.history[key].push(v);
+      if(!history[key]) history[key] = [];
+      if(!history[key].includes(v)) history[key].push(v);
       fillSelect(el.id);
       el.value = v;
-      saveStorage();
     }else{
       el.selectedIndex = 0;
     }
   }
 }
-
 function showSuggest(key, val){
   const wrap = document.getElementById("suggest-"+key);
   wrap.innerHTML="";
   if(!val.trim()){wrap.style.display="none";return;}
-  const list = data.history[key]||[];
+  const list = history[key]||[];
   const match = list.filter(x=>x.toLowerCase().includes(val.toLowerCase()));
   if(match.length===0){wrap.style.display="none";return;}
   match.forEach(t=>{
@@ -624,12 +606,6 @@ function showSuggest(key, val){
     wrap.appendChild(div);
   })
   wrap.style.display="block";
-}
-function pushHistory(key, val){
-  if(!val||!val.trim()) return;
-  const v = val.trim();
-  if(!data.history[key]) data.history[key]=[];
-  if(!data.history[key].includes(v)) data.history[key].push(v);
 }
 
 function calcSingle(){
@@ -705,9 +681,11 @@ function renderPhotoPreview(type){
   })
 }
 
-function saveSingle(){
-  const editIdx = Number(document.getElementById("editIdSingle").value);
+async function saveSingle(){
+  const editId = document.getElementById("editIdSingle").value;
   const obj = {
+    action:"save",
+    id: editId === "-1" ? "" : editId,
     type: "normal",
     orderDate:document.getElementById("orderDateSingle").value,
     orderNo:document.getElementById("orderNoSingle").value,
@@ -731,17 +709,8 @@ function saveSingle(){
     photos:photoCache["single"],
     remark:document.getElementById("remarkSingle").value
   }
-  pushHistory("orderNo", obj.orderNo);
-  pushHistory("artist", obj.artist);
-  pushHistory("shopName", obj.shopName);
-  pushHistory("recvSource", obj.recvSource);
-  pushHistory("platform", obj.platform);
-  if(editIdx >=0){
-    data.products[editIdx] = obj;
-  }else{
-    data.products.push(obj);
-  }
-  saveStorage(); clearSingle(); renderAll();
+  await saveToSheet(obj);
+  clearSingle();
 }
 function clearSingle(){
   document.getElementById("editIdSingle").value = "-1";
@@ -762,9 +731,11 @@ function clearSingle(){
   document.getElementById("recvDateSingle").value=today;
   calcSingle();
 }
-function saveMulti(){
-  const editIdx = Number(document.getElementById("editIdMulti").value);
+async function saveMulti(){
+  const editId = document.getElementById("editIdMulti").value;
   const obj = {
+    action:"save",
+    id: editId === "-1" ? "" : editId,
     type: "multi",
     orderDate:document.getElementById("orderDateMulti").value,
     orderNo:document.getElementById("orderNoMulti").value,
@@ -788,16 +759,8 @@ function saveMulti(){
     photos:photoCache["multi"],
     remark:document.getElementById("remarkMulti").value
   }
-  pushHistory("orderNo", obj.orderNo);
-  pushHistory("shopName", obj.shopName);
-  pushHistory("recvSource", obj.recvSource);
-  pushHistory("platform", obj.platform);
-  if(editIdx >=0){
-    data.products[editIdx] = obj;
-  }else{
-    data.products.push(obj);
-  }
-  saveStorage(); clearMulti(); renderAll();
+  await saveToSheet(obj);
+  clearMulti();
 }
 function clearMulti(){
   document.getElementById("editIdMulti").value = "-1";
@@ -816,9 +779,11 @@ function clearMulti(){
   document.getElementById("recvDateMulti").value=today;
   calcMulti();
 }
-function saveExch(){
-  const editIdx = Number(document.getElementById("editIdExch").value);
+async function saveExch(){
+  const editId = document.getElementById("editIdExch").value;
   const obj = {
+    action:"save",
+    id: editId === "-1" ? "" : editId,
     type:"exch",
     exchDate:document.getElementById("exchDate").value,
     exchCny:Number(document.getElementById("exchCny").value||0),
@@ -828,14 +793,8 @@ function saveExch(){
     exchTarget:document.getElementById("exchTarget").value,
     exchPurpose:document.getElementById("exchPurpose").value
   }
-  pushHistory("exchTarget", obj.exchTarget);
-  pushHistory("exchPurpose", obj.exchPurpose);
-  if(editIdx >=0){
-    data.products[editIdx] = obj;
-  }else{
-    data.products.push(obj);
-  }
-  saveStorage(); clearExch(); renderAll();
+  await saveToSheet(obj);
+  clearExch();
 }
 function clearExch(){
   document.getElementById("editIdExch").value = "-1";
@@ -846,13 +805,11 @@ function clearExch(){
   calcExch();
 }
 
-// 編輯載入
 function editItem(idx){
-  currentEditIndex = idx;
-  const item = data.products[idx];
-  if(item.type === "normal" || item.type === "migrated"){
+  const item = dataList[idx];
+  if(item.type === "normal"){
     toggleBlock('single');
-    document.getElementById("editIdSingle").value = idx;
+    document.getElementById("editIdSingle").value = item.id;
     document.getElementById("orderDateSingle").value = item.orderDate || "";
     document.getElementById("orderNoSingle").value = item.orderNo || "";
     document.getElementById("artistSingle").value = item.artist || "";
@@ -874,7 +831,7 @@ function editItem(idx){
     calcSingle();
   }else if(item.type === "multi"){
     toggleBlock('multi');
-    document.getElementById("editIdMulti").value = idx;
+    document.getElementById("editIdMulti").value = item.id;
     document.getElementById("orderDateMulti").value = item.orderDate || "";
     document.getElementById("orderNoMulti").value = item.orderNo || "";
     multiRows = Array.isArray(item.multiItems) ? JSON.parse(JSON.stringify(item.multiItems)) : [{artist:"",name:"",style:"",qty:""}];
@@ -894,7 +851,7 @@ function editItem(idx){
     calcMulti();
   }else if(item.type === "exch"){
     toggleBlock('exch');
-    document.getElementById("editIdExch").value = idx;
+    document.getElementById("editIdExch").value = item.id;
     document.getElementById("exchDate").value = item.exchDate || "";
     document.getElementById("exchCny").value = item.exchCny || "";
     document.getElementById("exchTwd").value = item.exchTwd || "";
@@ -904,10 +861,10 @@ function editItem(idx){
   }
   window.scrollTo({top:0,behavior:"smooth"});
 }
-function delItem(idx){
+async function delItem(idx){
+  const item = dataList[idx];
   if(!confirm("確認刪除這筆帳務？")) return;
-  data.products.splice(idx,1);
-  saveStorage(); renderAll();
+  await delFromSheet(item.id);
 }
 
 function doSearch(){ searchKeyword = document.getElementById("searchInput").value.trim().toLowerCase(); renderAll(); }
@@ -1028,21 +985,27 @@ function renderItems(list){
     wrap.appendChild(card);
   })
 }
-function renderAll(){ let list = filterByKeyword([...data.products]); calcSum(list); renderItems(list); }
+function renderAll(){ let list = filterByKeyword([...dataList]); calcSum(list); renderItems(list); }
 function renderRange(){
   const s = document.getElementById("startDate").value;
   const e = document.getElementById("endDate").value;
   if(!s || !e) return alert("請選起訖日期");
-  let filtered = data.products.filter(x=>{
+  let filtered = dataList.filter(x=>{
     const d = x.type==="exch" ? x.exchDate : x.orderDate;
     return d >= s && d <= e;
   })
   filtered = filterByKeyword(filtered); calcSum(filtered); renderItems(filtered);
 }
 
-window.onload = ()=>{
+window.onload = async ()=>{
   const today = getLocalToday();
-  loadData();
+  fillSelect("recvSourceSingle");
+  fillSelect("recvSourceMulti");
+  fillSelect("platformSingle");
+  fillSelect("platformMulti");
+  fillSelect("exchTarget");
+  fillSelect("exchPurpose");
+  await loadFromSheet();
   blockState.single = false; blockState.multi = false; blockState.exch = false;
   document.getElementById("panel-single").classList.remove("open");
   document.getElementById("panel-multi").classList.remove("open");
@@ -1053,7 +1016,6 @@ window.onload = ()=>{
   renderPhotoPreview("single"); renderPhotoPreview("multi");
   multiRows = [{artist:"", name:"", style:"", qty:""}]; renderMultiRows();
 
-  // 開頁預設今日
   document.getElementById("orderDateSingle").value = today;
   document.getElementById("recvDateSingle").value = today;
   document.getElementById("orderDateMulti").value = today;
